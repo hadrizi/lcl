@@ -5,7 +5,7 @@ use super::errors::{LexingError, LocatedError};
 pub type LexingResult<T> = std::result::Result<T, LexingError>;
 pub type LocatedResult<T> = std::result::Result<T, LocatedError>;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Location {
     pub col: usize,
     pub row: usize,

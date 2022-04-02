@@ -5,11 +5,13 @@ use super::{
     utils::{LexingResult, Location},
 };
 
+#[derive(Debug)]
 pub struct Token {
     pub ttype: TokenType,
     pub loc: Location,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum TokenType {
     Integer(i64),
     Identifier(String),

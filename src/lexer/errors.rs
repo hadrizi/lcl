@@ -12,6 +12,7 @@ pub enum LexingError {
     NoMatch,
 }
 
+#[derive(Debug)]
 pub struct LocatedError {
     pub loc: Location,
     pub error: LexingError,
