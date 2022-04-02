@@ -35,17 +35,6 @@ impl FromStr for TokenType {
     }
 }
 
-// impl TokenType {
-//     pub fn from_str(token: &str) -> Self {
-//         match token {
-//             "+" => TokenType::Plus,
-//             "-" => TokenType::Minus,
-//             "." => TokenType::Dot,
-//             _ => TokenType::Integer(token.parse().unwrap()),
-//         }
-//     }
-// }
-
 fn tokenize_number(number: &str) -> LexingResult<TokenType> {
     if let Ok(n) = number.parse::<i64>() {
         Ok(TokenType::Integer(n))

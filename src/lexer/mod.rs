@@ -8,7 +8,7 @@ use self::{
     utils::{fetch_while, LocatedResult, Location},
 };
 
-struct Lexer<'a> {
+pub struct Lexer<'a> {
     loc: Location,
     src: &'a str,
 }
@@ -58,9 +58,16 @@ impl<'a> Lexer<'a> {
     }
 
     fn skip(&mut self) {
-        let (whitespaces, newlines) = skip_whitespace(self.src);
-        let comments = skip_comments(self.src);
-        self.jump(whitespaces + comments, newlines);
+        loop {
+            let (comments, newlines) = skip_comments(self.src);
+            self.jump(comments, newlines);
+            let (whitespaces, newlines) = skip_whitespace(self.src);
+            self.jump(whitespaces, newlines);
+
+            if comments + whitespaces == 0 {
+                break;
+            }
+        }
     }
 
     fn jump(&mut self, len: usize, newlines: usize) {
@@ -88,23 +95,34 @@ fn skip_whitespace(data: &str) -> (usize, usize) {
     }
 }
 
-fn skip_comments(data: &str) -> usize {
+fn skip_comments(data: &str) -> (usize, usize) {
     let comment_patterns = [("//", "\n"), ("/*", "*/")];
 
     for pattern in comment_patterns.iter() {
         if data.starts_with(pattern.0) {
-            let mut cut_data = data;
-            while !cut_data.is_empty() && !cut_data.starts_with(pattern.1) {
-                cut_data = &cut_data[data.chars().next().expect("String is empty").len_utf8()..];
-            }
-            if cut_data.chars().nth(0).unwrap() != '\n' {
-                cut_data = &cut_data[pattern.1.len()..];
+            let mut newlines = 0;
+            let mut comment = data;
+            loop {
+                comment = &comment[data.chars().next().expect("String is empty").len_utf8()..];
+                match comment.chars().next() {
+                    Some(ch) if ch == '\n' => newlines += 1,
+                    _ => {}
+                }
+
+                if comment.is_empty() || comment.starts_with(pattern.1) {
+                    comment = if !comment.is_empty() {
+                        &comment[pattern.1.len()..]
+                    } else {
+                        comment
+                    };
+                    break;
+                }
             }
 
-            return data.len() - cut_data.len();
+            return (data.len() - comment.len(), newlines);
         }
     }
-    0
+    (0, 0)
 }
 
 pub fn tokenize(src: &str, file: &str) -> LocatedResult<Vec<Token>> {

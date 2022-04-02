@@ -1,6 +1,7 @@
 mod constants;
 mod lexer;
 mod repl;
+mod tests;
 
 use lexer::tokenize;
 use lexer::tokens::{Token, TokenType};
