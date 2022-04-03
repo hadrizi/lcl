@@ -5,7 +5,7 @@ mod tests;
 
 use lexer::tokenize;
 use lexer::tokens::{Token, TokenType};
-use lib::utils::LocatedResult;
+use lib::utils::{LocatedResult, Location};
 use repl::REPL;
 use std::env;
 use std::fs::{self, File};
@@ -19,6 +19,7 @@ fn read_program(path: &str) -> LocatedResult<Vec<Token>> {
 
 fn compile(program: Vec<Token>) -> Result<(), Error> {
     let mut output = File::create("output.asm").expect("failed to create asm file");
+    let mut markers = Vec::<(String, Location)>::new();
 
     writeln!(output, "global _start")?;
     writeln!(output, "section .text")?;
@@ -63,31 +64,94 @@ fn compile(program: Vec<Token>) -> Result<(), Error> {
     for op in program.iter() {
         match &op.ttype {
             TokenType::Integer(x) => {
-                writeln!(output, "\t; Operation::Push({})", &x)?;
+                writeln!(output, "\t; Push({})", &x)?;
                 writeln!(output, "\tmov  rax, {}", &x)?;
                 writeln!(output, "\tpush rax")?;
             }
             TokenType::Plus => {
-                writeln!(output, "\t; Operation::Plus")?;
+                writeln!(output, "\t; Plus")?;
                 writeln!(output, "\tpop  rax")?;
                 writeln!(output, "\tpop  rbx")?;
                 writeln!(output, "\tadd  rax, rbx")?;
                 writeln!(output, "\tpush rax")?;
             }
             TokenType::Minus => {
-                writeln!(output, "\t; Operation::Plus")?;
+                writeln!(output, "\t; Minus")?;
                 writeln!(output, "\tpop  rax")?;
                 writeln!(output, "\tpop  rbx")?;
                 writeln!(output, "\tadd  rbx, rax")?;
                 writeln!(output, "\tpush rax")?;
             }
             TokenType::Dot => {
-                writeln!(output, "\t; Operation::Print")?;
+                writeln!(output, "\t; Dot")?;
                 writeln!(output, "\tpop  rdi")?;
                 writeln!(output, "\tcall print")?;
             }
             TokenType::Identifier(x) => writeln!(output, "\t; Identifier found {}", &x)?,
+            TokenType::Less => {
+                writeln!(output, "\t; Less")?;
+                writeln!(output, "\tmov rcx, 0")?;
+                writeln!(output, "\tmov rdx, 1")?;
+                writeln!(output, "\tpop rbx")?;
+                writeln!(output, "\tpop rax")?;
+                writeln!(output, "\tcmp rax, rbx")?;
+                writeln!(output, "\tcmovl rcx, rdx")?;
+                writeln!(output, "\tpush rcx")?;
+            }
+            TokenType::Greater => {
+                writeln!(output, "\t; Greater")?;
+                writeln!(output, "\tmov rcx, 0")?;
+                writeln!(output, "\tmov rdx, 1")?;
+                writeln!(output, "\tpop rbx")?;
+                writeln!(output, "\tpop rax")?;
+                writeln!(output, "\tcmp rax, rbx")?;
+                writeln!(output, "\tcmovg rcx, rdx")?;
+                writeln!(output, "\tpush rcx")?;
+            }
+            TokenType::Equal => {
+                writeln!(output, "\t; Equal")?;
+                writeln!(output, "\tmov rcx, 0")?;
+                writeln!(output, "\tmov rdx, 1")?;
+                writeln!(output, "\tpop rax")?;
+                writeln!(output, "\tpop rbx")?;
+                writeln!(output, "\tcmp rax, rbx")?;
+                writeln!(output, "\tcmove rcx, rdx")?;
+                writeln!(output, "\tpush rcx")?;
+            }
+            TokenType::NotEqual => {
+                writeln!(output, "\t; NotEqual")?;
+                writeln!(output, "\tmov rcx, 0")?;
+                writeln!(output, "\tmov rdx, 1")?;
+                writeln!(output, "\tpop rax")?;
+                writeln!(output, "\tpop rbx")?;
+                writeln!(output, "\tcmp rax, rbx")?;
+                writeln!(output, "\tcmovne rcx, rdx")?;
+                writeln!(output, "\tpush rcx")?;
+            }
+            TokenType::If(marker) => {
+                writeln!(output, "\t; If")?;
+                writeln!(output, "\tpop rax")?;
+                writeln!(output, "\ttest rax, rax")?;
+                writeln!(output, "\tjz end_{}", &marker)?;
+                markers.push((marker.to_string(), op.loc.clone()));
+            }
+            TokenType::End => {
+                if !markers.is_empty() {
+                    writeln!(output, "\t; End")?;
+                    writeln!(output, "\tend_{}:", markers.pop().unwrap().0)?;
+                }
+            }
         }
+    }
+
+    if !markers.is_empty() {
+        return Err(Error::new(
+            std::io::ErrorKind::Other,
+            format!(
+                "CompilationError: not enclosed block at {}",
+                markers.last().unwrap().1
+            ),
+        ));
     }
 
     // exit syscall

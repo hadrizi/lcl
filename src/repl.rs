@@ -54,7 +54,7 @@ impl REPL {
         }
     }
 
-    pub fn read(&mut self) -> LocatedResult<Vec<Token>> {
+    fn read(&mut self) -> LocatedResult<Vec<Token>> {
         print!("{}", self.prompt);
         stdout().flush().expect("failed to flush stdout");
         let input_result = self
@@ -77,7 +77,7 @@ impl REPL {
         }
     }
 
-    pub fn eval(&mut self, op: Token) -> Result<(), Error> {
+    fn eval(&mut self, op: Token) -> Result<(), Error> {
         match op.ttype {
             TokenType::Integer(x) => {
                 self.stack.push(x);
@@ -93,23 +93,61 @@ impl REPL {
                 self.stack.push(b - a);
             }
             TokenType::Dot => writeln!(self.output_handle, "{}", self.stack.pop()?)?,
-            TokenType::Identifier(_) => {
-                writeln!(self.error_handle, "identifiers are not implemented",)?;
+            TokenType::Less => {
+                let a = self.stack.pop()?;
+                let b = self.stack.pop()?;
+                self.stack.push((b < a) as i64);
             }
+            TokenType::Greater => {
+                let a = self.stack.pop()?;
+                let b = self.stack.pop()?;
+                self.stack.push((b > a) as i64);
+            }
+            TokenType::Equal => {
+                let a = self.stack.pop()?;
+                let b = self.stack.pop()?;
+                self.stack.push((a == b) as i64);
+            }
+            TokenType::NotEqual => {
+                let a = self.stack.pop()?;
+                let b = self.stack.pop()?;
+                self.stack.push((a != b) as i64);
+            }
+            TokenType::Identifier(_) => {
+                writeln!(
+                    self.error_handle,
+                    "identifiers are not supported in the interactive shell",
+                )?;
+            }
+            TokenType::If(_) => writeln!(
+                self.error_handle,
+                "control flow is not supported in the interactive shell",
+            )?,
+            TokenType::End => writeln!(
+                self.error_handle,
+                "control flow is not supported in the interactive shell",
+            )?,
         }
         Ok(())
     }
 
     pub fn run_loop(&mut self) {
         println!("{} {}", PKG_NAME, VERSION);
+        let mut is_ok = true;
         loop {
             match self.read() {
                 Ok(ops) => {
                     for op in ops {
                         match self.eval(op) {
-                            Err(e) => writeln!(self.error_handle, "{}", &e).unwrap(),
-                            _ => writeln!(self.output_handle, "ok").unwrap(),
+                            Err(e) => {
+                                writeln!(self.error_handle, "{}", &e).unwrap();
+                                is_ok = false;
+                            }
+                            _ => {}
                         };
+                    }
+                    if is_ok {
+                        writeln!(self.output_handle, "ok").unwrap();
                     }
                 }
                 Err(e) => writeln!(self.error_handle, "{}", &e).unwrap(),

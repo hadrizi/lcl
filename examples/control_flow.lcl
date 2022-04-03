@@ -1,0 +1,17 @@
+// successful if
+1 1 = if
+    1 .
+end
+
+// failed if
+1 1 < if
+    2 .
+end
+
+// nested if
+1 1 = if
+    3 .
+    2 3 < if
+        4 .
+    end
+end
