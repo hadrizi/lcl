@@ -1,10 +1,12 @@
 use std::io::{stdin, stdout, BufRead, BufReader, Error, ErrorKind, Write};
 
 use crate::{
-    constants::{PKG_NAME, VERSION},
     lexer::{
         tokenize,
         tokens::{Token, TokenType},
+    },
+    lib::{
+        constants::{PKG_NAME, VERSION},
         utils::LocatedResult,
     },
 };

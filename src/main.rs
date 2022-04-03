@@ -1,11 +1,11 @@
-mod constants;
 mod lexer;
+mod lib;
 mod repl;
 mod tests;
 
 use lexer::tokenize;
 use lexer::tokens::{Token, TokenType};
-use lexer::utils::LocatedResult;
+use lib::utils::LocatedResult;
 use repl::REPL;
 use std::env;
 use std::fs::{self, File};

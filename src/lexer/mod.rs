@@ -1,20 +1,19 @@
-mod errors;
 pub mod tokens;
-pub mod utils;
 
-use self::{
+use crate::lib::{
     errors::{LexingError, LocatedError},
-    tokens::{tokenize_word, Token},
     utils::{fetch_while, LocatedResult, Location},
 };
 
-pub struct Lexer<'a> {
+use self::tokens::{tokenize_word, Token};
+
+struct Lexer<'a> {
     loc: Location,
     src: &'a str,
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(src: &'a str, file: &'a str) -> Self {
+    fn new(src: &'a str, file: &'a str) -> Self {
         Self {
             src,
             loc: Location {
@@ -24,7 +23,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn next_token(&mut self) -> LocatedResult<Option<Token>> {
+    fn next_token(&mut self) -> LocatedResult<Option<Token>> {
         self.skip();
 
         if self.src.is_empty() {

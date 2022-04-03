@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use super::{
+use crate::lib::{
     errors::LexingError,
     utils::{LexingResult, Location},
 };
@@ -54,7 +54,7 @@ fn tokenize_identifier(ident: &str) -> LexingResult<TokenType> {
     Ok(TokenType::Identifier(ident.to_string()))
 }
 
-pub fn tokenize_word(word: &str) -> LexingResult<(TokenType, usize)> {
+pub(super) fn tokenize_word(word: &str) -> LexingResult<(TokenType, usize)> {
     let ttype = TokenType::from_str(word)?;
     Ok((ttype, word.len()))
 }
