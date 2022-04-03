@@ -15,12 +15,15 @@ pub enum LexingError {
 #[derive(Debug)]
 pub struct LocatedError {
     pub loc: Location,
-    pub error: LexingError,
+    pub error: Box<dyn Error>,
 }
 
 impl LocatedError {
-    pub fn new(loc: Location, error: LexingError) -> Self {
-        Self { loc, error }
+    pub fn new(loc: Location, error: impl Error + 'static) -> Self {
+        Self {
+            loc,
+            error: Box::new(error),
+        }
     }
 }
 
