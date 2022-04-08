@@ -1,0 +1,2 @@
+// dup - duplicates top value on stack
+10 dup . .

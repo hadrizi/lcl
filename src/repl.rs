@@ -127,6 +127,10 @@ impl REPL {
                 self.error_handle,
                 "control flow is not supported in the interactive shell",
             )?,
+            TokenType::While => writeln!(
+                self.error_handle,
+                "loops are not supported in the interactive shell",
+            )?,
             TokenType::End => writeln!(
                 self.error_handle,
                 "control flow is not supported in the interactive shell",

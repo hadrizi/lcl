@@ -4,4 +4,4 @@
         -   takes top two values from the stack and puts difference between *second* and *first* on the stack
 */
 32 5 + .
-10 5 - .
+67 3 - .

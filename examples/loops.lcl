@@ -1,0 +1,6 @@
+10 
+while
+    dup .   // print counter
+    1 -     // decrement counter
+    dup 0 > // loop condition
+end
