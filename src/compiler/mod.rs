@@ -134,13 +134,23 @@ pub fn compile(program: Vec<Token>) -> Result<(), Error> {
             }
             // FIXME: make proper while loop(e.g., while ... do ... end)
             TokenType::While => {
-                writeln!(output, "\t; While")?;
-                writeln!(output, "\tjmp l{}+4 ; this is hack", &idx)?;
+                writeln!(output, "\t; While:start of loop condition")?;
                 writeln!(output, "l{}:", &idx)?;
-                writeln!(output, "\tpop rax")?;
-                writeln!(output, "\ttest rax, rax")?;
-                writeln!(output, "\tjz .e{}", &idx)?;
                 markers.push((idx, op.loc.clone()));
+            }
+            TokenType::Do => {
+                if !markers.is_empty() {
+                    let i = markers.last().unwrap().0;
+                    writeln!(output, "\t; Do:end of loop condition")?;
+                    writeln!(output, "\tpop rax")?;
+                    writeln!(output, "\ttest rax, rax")?;
+                    writeln!(output, "\tjz .e{}", &i)?;
+                } else {
+                    return Err(Error::new(
+                        std::io::ErrorKind::Other,
+                        format!("CompilationError: unexpected do at {}", op.loc),
+                    ));
+                }
             }
             TokenType::End => {
                 if !markers.is_empty() {
