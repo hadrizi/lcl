@@ -6,11 +6,13 @@ mod tests;
 use lexer::tokenize;
 use lexer::tokens::{Token, TokenType};
 use lib::utils::{LocatedResult, Location};
+use log::{error, info, warn};
 use repl::REPL;
 use std::env;
 use std::fs::{self, File};
 use std::io::{Error, Write};
 use std::process::{exit, Command};
+use std::str::from_utf8;
 
 fn read_program(path: &str) -> LocatedResult<Vec<Token>> {
     let data = fs::read_to_string(path).expect("failed to read from file");
@@ -164,19 +166,37 @@ fn compile(program: Vec<Token>) -> Result<(), Error> {
     writeln!(output, "syscall")?;
     writeln!(output, "ret")?;
 
-    Command::new("nasm")
+    // TODO: replace env_logger
+    // FIXME: handle Command output in more fancy way
+    info!("nasm -felf64 output.asm");
+    let output = Command::new("nasm")
         .args(["-felf64", "output.asm"])
         .output()
         .expect("failed to run nasm");
-    Command::new("ld")
+    if output.stdout.len() > 0 {
+        warn!("{}", from_utf8(&output.stdout).unwrap());
+    }
+    if output.stderr.len() > 0 {
+        error!("{}", from_utf8(&output.stderr).unwrap());
+    }
+
+    info!("ld -o output output.o");
+    let output = Command::new("ld")
         .args(["-o", "output", "output.o"])
         .output()
         .expect("failed to run ld");
+    if output.stdout.len() > 0 {
+        warn!("{}", from_utf8(&output.stdout).unwrap());
+    }
+    if output.stderr.len() > 0 {
+        error!("{}", from_utf8(&output.stderr).unwrap());
+    }
 
     Ok(())
 }
 
 fn main() {
+    env_logger::init();
     let args: Vec<String> = env::args().collect();
     if args.len() == 1 {
         let mut repl = REPL::new(">> ");

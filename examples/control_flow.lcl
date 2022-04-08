@@ -25,12 +25,12 @@ end
 
 // nested if-else
 1 2 = if
-    5 .
+    7 .
 else
-    6 .
+    8 .
     2 2 + 4 = if
-        7 .
+        9 .
     else
-        8 .
+        10 .
     end
 end
