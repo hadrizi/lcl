@@ -15,3 +15,22 @@ end
         4 .
     end
 end
+
+// if-else
+1 2 = if
+    5 .
+else
+    6 .
+end
+
+// nested if-else
+1 2 = if
+    5 .
+else
+    6 .
+    2 2 + 4 = if
+        7 .
+    else
+        8 .
+    end
+end

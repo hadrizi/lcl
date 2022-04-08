@@ -19,7 +19,7 @@ fn read_program(path: &str) -> LocatedResult<Vec<Token>> {
 
 fn compile(program: Vec<Token>) -> Result<(), Error> {
     let mut output = File::create("output.asm").expect("failed to create asm file");
-    let mut markers = Vec::<(String, Location)>::new();
+    let mut markers = Vec::<(usize, Location)>::new();
 
     writeln!(output, "global _start")?;
     writeln!(output, "section .text")?;
@@ -61,7 +61,7 @@ fn compile(program: Vec<Token>) -> Result<(), Error> {
     writeln!(output, "\tret")?;
 
     writeln!(output, "_start:")?;
-    for op in program.iter() {
+    for (idx, op) in program.iter().enumerate() {
         match &op.ttype {
             TokenType::Integer(x) => {
                 writeln!(output, "\t; Push({})", &x)?;
@@ -128,17 +128,21 @@ fn compile(program: Vec<Token>) -> Result<(), Error> {
                 writeln!(output, "\tcmovne rcx, rdx")?;
                 writeln!(output, "\tpush rcx")?;
             }
-            TokenType::If(marker) => {
+            TokenType::If => {
                 writeln!(output, "\t; If")?;
                 writeln!(output, "\tpop rax")?;
                 writeln!(output, "\ttest rax, rax")?;
-                writeln!(output, "\tjz end_{}", &marker)?;
-                markers.push((marker.to_string(), op.loc.clone()));
+                writeln!(output, "\tjz l{}", &idx)?;
+                markers.push((idx, op.loc.clone()));
+            }
+            TokenType::Else => {
+                writeln!(output, "\tjmp l{}", &idx)?;
+                writeln!(output, "l{}:", markers.pop().unwrap().0)?;
+                markers.push((idx, op.loc.clone()));
             }
             TokenType::End => {
                 if !markers.is_empty() {
-                    writeln!(output, "\t; End")?;
-                    writeln!(output, "\tend_{}:", markers.pop().unwrap().0)?;
+                    writeln!(output, "l{}:", markers.pop().unwrap().0)?;
                 }
             }
         }

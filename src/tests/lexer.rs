@@ -12,6 +12,9 @@ lexer_test!(tokenize_greater, ">" => vec![TokenType::Greater]);
 lexer_test!(tokenize_less, "<" => vec![TokenType::Less]);
 lexer_test!(tokenize_equal, "=" => vec![TokenType::Equal]);
 lexer_test!(tokenize_notequal, "!=" => vec![TokenType::NotEqual]);
+lexer_test!(tokenize_if, "if" => vec![TokenType::If]);
+lexer_test!(tokenize_else, "else" => vec![TokenType::Else]);
+lexer_test!(tokenize_end, "end" => vec![TokenType::End]);
 
 // Identifiers tests
 lexer_test!(tokenize_single_word_identifier, "test" => vec![TokenType::Identifier("test".to_string())]);
@@ -56,6 +59,14 @@ lexer_test!(tokenize_multiple_lines_program, "12 123 + - . test\n12 123 + - . te
     TokenType::Minus,
     TokenType::Dot,
     TokenType::Identifier("test".to_string()),
+]);
+lexer_test!(tokenize_if_else_program, "1 if 2 else 3 end" => vec![
+    TokenType::Integer(1),
+    TokenType::If,
+    TokenType::Integer(2),
+    TokenType::Else,
+    TokenType::Integer(3),
+    TokenType::End,
 ]);
 
 // Comments tests

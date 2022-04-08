@@ -119,7 +119,11 @@ impl REPL {
                     "identifiers are not supported in the interactive shell",
                 )?;
             }
-            TokenType::If(_) => writeln!(
+            TokenType::If => writeln!(
+                self.error_handle,
+                "control flow is not supported in the interactive shell",
+            )?,
+            TokenType::Else => writeln!(
                 self.error_handle,
                 "control flow is not supported in the interactive shell",
             )?,
