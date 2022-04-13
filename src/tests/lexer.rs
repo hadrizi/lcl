@@ -12,11 +12,14 @@ lexer_test!(tokenize_greater, ">" => vec![TokenType::Greater]);
 lexer_test!(tokenize_less, "<" => vec![TokenType::Less]);
 lexer_test!(tokenize_equal, "=" => vec![TokenType::Equal]);
 lexer_test!(tokenize_notequal, "!=" => vec![TokenType::NotEqual]);
+lexer_test!(tokenize_store, "@" => vec![TokenType::Store]);
+lexer_test!(tokenize_load, "!" => vec![TokenType::Load]);
 lexer_test!(tokenize_if, "if" => vec![TokenType::If]);
 lexer_test!(tokenize_else, "else" => vec![TokenType::Else]);
 lexer_test!(tokenize_end, "end" => vec![TokenType::End]);
 lexer_test!(tokenize_while, "while" => vec![TokenType::While]);
 lexer_test!(tokenize_do, "do" => vec![TokenType::Do]);
+lexer_test!(tokenize_mem, "mem" => vec![TokenType::Mem]);
 
 // Identifiers tests
 lexer_test!(tokenize_single_word_identifier, "test" => vec![TokenType::Identifier("test".to_string())]);
@@ -77,6 +80,14 @@ lexer_test!(tokenize_while_program, "while 1 do 2 . end" => vec![
     TokenType::Integer(2),
     TokenType::Dot,
     TokenType::End,
+]);
+lexer_test!(tokenize_memory_program, "mem 1 @ mem ! ." => vec![
+    TokenType::Mem,
+    TokenType::Integer(1),
+    TokenType::Store,
+    TokenType::Mem,
+    TokenType::Load,
+    TokenType::Dot,
 ]);
 
 // Comments tests

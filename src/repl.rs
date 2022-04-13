@@ -9,7 +9,7 @@ use crate::{
         tokens::{Token, TokenType},
     },
     lib::{
-        constants::{PKG_NAME, VERSION},
+        constants::{PKG_DESCRIPTION, PKG_NAME, VERSION},
         utils::LocatedResult,
     },
 };
@@ -35,6 +35,7 @@ impl Stack {
 pub struct REPL {
     stack: Stack,
     prompt: String,
+    memory: [i64; 262144],
     input_handle: BufReader<Stdin>,
     output_handle: BufWriter<Stdout>,
     error_handle: BufWriter<Stderr>,
@@ -51,6 +52,7 @@ impl REPL {
             input_handle: BufReader::new(stdin),
             output_handle: BufWriter::new(stdout),
             error_handle: BufWriter::new(stderr),
+            memory: [0; 262144],
         }
     }
 
@@ -139,12 +141,26 @@ impl REPL {
                 self.error_handle,
                 "control flow is not supported in the interactive shell",
             )?,
+            TokenType::Mem => self.stack.push(0),
+            TokenType::Load => {
+                let a = self.stack.pop()?;
+                let b = self.memory[a as usize];
+                self.stack.push(b);
+            }
+            TokenType::Store => {
+                let a = self.stack.pop()?;
+                let b = self.stack.pop()?;
+                self.memory[b as usize] = a;
+            }
         }
         Ok(())
     }
 
     pub fn run_loop(&mut self) {
-        println!("{} {}", PKG_NAME, VERSION);
+        println!(
+            "{} {} interactive shell\n{}",
+            PKG_NAME, VERSION, PKG_DESCRIPTION
+        );
         let mut is_ok = true;
         loop {
             match self.read() {

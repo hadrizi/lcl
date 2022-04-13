@@ -13,6 +13,7 @@ use crate::{
 pub fn compile(program: Vec<Token>) -> Result<(), Error> {
     let mut output = File::create("output.asm").expect("failed to create asm file");
     let mut markers = Vec::<(usize, Location)>::new();
+    let mem_capacity = 262144;
 
     writeln!(output, "global _start")?;
     writeln!(output, "section .text")?;
@@ -182,6 +183,23 @@ pub fn compile(program: Vec<Token>) -> Result<(), Error> {
                     ))
                 }
             },
+            TokenType::Mem => {
+                writeln!(output, "\t; MEM")?;
+                writeln!(output, "\tpush mem")?;
+            }
+            TokenType::Store => {
+                writeln!(output, "\t; Store")?;
+                writeln!(output, "\tpop rax")?;
+                writeln!(output, "\tpop rbx")?;
+                writeln!(output, "\tmov [rbx], rax")?;
+            }
+            TokenType::Load => {
+                writeln!(output, "\t; Load")?;
+                writeln!(output, "\tpop rax")?;
+                writeln!(output, "\txor rbx, rbx")?;
+                writeln!(output, "\tmov rbx, [rax]")?;
+                writeln!(output, "\tpush rbx")?;
+            }
         }
     }
 
@@ -200,6 +218,9 @@ pub fn compile(program: Vec<Token>) -> Result<(), Error> {
     writeln!(output, "\tmov rdi, 0")?;
     writeln!(output, "\tsyscall")?;
     writeln!(output, "\tret")?;
+
+    writeln!(output, "section .bss")?;
+    writeln!(output, "\tmem resq {}", mem_capacity)?;
 
     let output = Command::new("nasm")
         .args(["-felf64", "output.asm"])

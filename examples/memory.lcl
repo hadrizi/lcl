@@ -1,0 +1,19 @@
+/*
+    mem - pushes pointer to the start of a memory block onto the stack
+    @   - store value on top of the stack to the memory
+    !   - load value from the memory to the stack
+    
+    note:
+        if you want to store more than one value in the memory you should add 8 to the `mem`
+        since integers in LCL are 64 bit long
+*/
+// print memory pointer
+mem .
+
+// store 1 and 2 in the memory
+mem 1 @
+mem 8 + 2 @
+
+// then load them out!
+mem ! .
+mem 8 + ! .
