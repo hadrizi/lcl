@@ -5,6 +5,7 @@ Experimental stack-oriented programming language. Memory edition.
 1. [Usage](#usage)
 3. [Milestones](#milestones)
 2. [Language Basics](#language-basics)
+4. [Interactive shell](#interactive-shell)
 
 ## Milestones
 - [x] Compilation to asm (only x86_64)
@@ -116,3 +117,19 @@ Example:
 
 1 2 3 // inline comment
 ```
+
+## Interactive shell
+LCL can be run as interactive shell. 
+
+Just run it without input file provided
+```bash
+$ lcl
+lcl 0.3.0 interactive shell
+Experimental stack-oriented programming language. Memory edition.
+>> 
+```
+
+In the interactive shell mode you can execute operations line by line. Note that [control flow](#control-flow) instructions are not supported in the interactive shell.
+
+Memory and stack are simulated and will be destructed when you exit the shell.
+
