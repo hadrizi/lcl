@@ -16,12 +16,6 @@ Experimental stack-oriented programming language. Memory edition.
     4. [Comments](#comments)
 4. [Interactive shell](#interactive-shell)
 
-## Milestones
-- [x] Compilation to asm (only x86_64)
-- [ ] [Turing-completeness](https://en.wikipedia.org/wiki/Turing_completeness)
-- [ ] [Self-hosting compiler](https://en.wikipedia.org/wiki/Self-hosting_(compilers))
-- [ ] Optimization
-- [ ] Windows and MacOS support
 
 ## Usage
 ```
@@ -40,6 +34,13 @@ OPTIONS:
     -V, --version            Print version information
 ```
 
+## Milestones
+- [x] Compilation to asm (only x86_64)
+- [ ] [Turing-completeness](https://en.wikipedia.org/wiki/Turing_completeness)
+- [ ] [Self-hosting compiler](https://en.wikipedia.org/wiki/Self-hosting_(compilers))
+- [ ] Optimization
+- [ ] Windows and MacOS support
+
 ## Language Basics
 ### Numbers
 Number is a sequence of decimal digits. When one is encountered it's simply pushed onto the stack.
@@ -55,7 +56,7 @@ The code above pushes `1`, `2`, `3` onto the stack thus `3` is on top.
 | Keyword | Description |
 | ---     | ---         |
 | `+`     | sums up two values on top of the stack |
-| `=`     | subtracts two values on top of the stack (the first from the second) |
+| `-`     | subtracts two values on top of the stack (the first from the second) |
 
 #### Comparison
 - `0` is `false`
