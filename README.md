@@ -104,13 +104,13 @@ The code above prints numbers from 0 to 9
 ### Comments
 Two types of comments are supported:
 - `//` inline comment
-- `/* */` multi-lines comment
+- `/* */` multi-line comment
 
 Example:
 ```
 /*
     multi
-    lines
+    line
     comment
 */
 
