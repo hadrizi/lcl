@@ -15,6 +15,8 @@ lexer_test!(tokenize_notequal, "!=" => vec![TokenType::NotEqual]);
 lexer_test!(tokenize_if, "if" => vec![TokenType::If]);
 lexer_test!(tokenize_else, "else" => vec![TokenType::Else]);
 lexer_test!(tokenize_end, "end" => vec![TokenType::End]);
+lexer_test!(tokenize_while, "while" => vec![TokenType::While]);
+lexer_test!(tokenize_do, "do" => vec![TokenType::Do]);
 
 // Identifiers tests
 lexer_test!(tokenize_single_word_identifier, "test" => vec![TokenType::Identifier("test".to_string())]);
@@ -66,6 +68,14 @@ lexer_test!(tokenize_if_else_program, "1 if 2 else 3 end" => vec![
     TokenType::Integer(2),
     TokenType::Else,
     TokenType::Integer(3),
+    TokenType::End,
+]);
+lexer_test!(tokenize_while_program, "while 1 do 2 . end" => vec![
+    TokenType::While,
+    TokenType::Integer(1),
+    TokenType::Do,
+    TokenType::Integer(2),
+    TokenType::Dot,
     TokenType::End,
 ]);
 

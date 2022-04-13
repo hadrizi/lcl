@@ -132,7 +132,6 @@ pub fn compile(program: Vec<Token>) -> Result<(), Error> {
                 writeln!(output, ".e{}:", markers.pop().unwrap().0)?;
                 markers.push((idx, op.loc.clone()));
             }
-            // FIXME: make proper while loop(e.g., while ... do ... end)
             TokenType::While => {
                 writeln!(output, "\t; While:start of loop condition")?;
                 writeln!(output, "l{}:", &idx)?;

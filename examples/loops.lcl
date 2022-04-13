@@ -1,5 +1,5 @@
-10 
-while dup 0 > do
+0 
+while dup 10 < do
     dup .   // print counter
-    1 -     // decrement counter
+    1 +     // decrement counter
 end
