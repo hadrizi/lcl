@@ -3,8 +3,17 @@ Experimental stack-oriented programming language. Memory edition.
 
 ## Table of contents
 1. [Usage](#usage)
-3. [Milestones](#milestones)
-2. [Language Basics](#language-basics)
+2. [Milestones](#milestones)
+3. [Language Basics](#language-basics)
+    1. [Numbers](#numbers)
+    2. [Built-ins](#built-ins)
+        1. [Arithmetics](#arithmetics)
+        2. [Comparison](#comparison)
+        3. [Stack manipulation](#stack-manipulation)
+        4. [Memory](#memory)
+        5. [Misc](#misc)
+    3. [Control flow](#control-flow)
+    4. [Comments](#comments)
 4. [Interactive shell](#interactive-shell)
 
 ## Milestones
