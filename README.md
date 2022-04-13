@@ -49,7 +49,7 @@ The code above pushes `1`, `2`, `3` onto the stack thus `3` is on top.
 
 #### Comparison
 - `0` is `false`
-- anything not equal to 0 is considered true
+- anything not equal to 0 is considered `true`, below operations push `1` if true
 
 | Keyword | Description |
 | ---     | ---         |
