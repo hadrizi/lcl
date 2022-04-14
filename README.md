@@ -72,7 +72,7 @@ The code above pushes `1`, `2`, `3` onto the stack thus `3` is on top.
 #### Stack manipulation
 | Keyword | Description |
 | ---     | ---         |
-| `dup`   | duplicates top two values of the stack |
+| `dup`   | duplicates top value of the stack |
 | `drop`  | drops(removes) top value of the stack |
 | `swap`  | swaps top two values of the stack |
 | `over`  | takes the second value from the top of the stack and duplicates it to the top of the stack |
