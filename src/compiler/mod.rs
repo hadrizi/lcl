@@ -10,8 +10,9 @@ use crate::{
     lib::utils::Location,
 };
 
-pub fn compile(program: Vec<Token>) -> Result<(), Error> {
-    let mut output = File::create("output.asm").expect("failed to create asm file");
+pub fn compile(program: Vec<Token>, out: &str) -> Result<(), Error> {
+    let mut output =
+        File::create(format!("{}.{}", &out, "asm")).expect("failed to create asm file");
     let mut markers = Vec::<(usize, Location)>::new();
     let mem_capacity = 262144;
 
@@ -202,8 +203,8 @@ pub fn compile(program: Vec<Token>) -> Result<(), Error> {
                     writeln!(output, "\tpop rbx")?;
                     writeln!(output, "\tpop rcx")?;
                     writeln!(output, "\tpush rbx")?;
-                    writeln!(output, "\tpush rcx")?;
                     writeln!(output, "\tpush rax")?;
+                    writeln!(output, "\tpush rcx")?;
                 }
                 _ => {
                     return Err(Error::new(
@@ -252,7 +253,7 @@ pub fn compile(program: Vec<Token>) -> Result<(), Error> {
     writeln!(output, "\tmem resq {}", mem_capacity)?;
 
     let output = Command::new("nasm")
-        .args(["-felf64", "output.asm"])
+        .args(["-felf64", format!("{}.{}", &out, "asm").as_str()])
         .output()
         .expect("failed to run nasm");
     if output.stderr.len() > 0 {
@@ -263,7 +264,7 @@ pub fn compile(program: Vec<Token>) -> Result<(), Error> {
     }
 
     let output = Command::new("ld")
-        .args(["-o", "output", "output.o"])
+        .args(["-o", out, format!("{}.{}", &out, "o").as_str()])
         .output()
         .expect("failed to run ld");
     if output.stderr.len() > 0 {

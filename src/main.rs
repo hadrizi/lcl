@@ -37,7 +37,6 @@ fn main() {
     let args = Args::parse();
     match args.input {
         Some(input) => {
-            // TODO: add output file support
             let program = match read_program(input.to_str().unwrap()) {
                 Ok(p) => p,
                 Err(e) => {
@@ -45,7 +44,12 @@ fn main() {
                     exit(1);
                 }
             };
-            if let Err(e) = compile(program) {
+            let out = args.output.unwrap_or_else(|| {
+                let mut default = PathBuf::new();
+                default.set_file_name("output");
+                return default;
+            });
+            if let Err(e) = compile(program, out.to_str().unwrap()) {
                 eprintln!("{}", e);
                 exit(1);
             };
