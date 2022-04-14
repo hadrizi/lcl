@@ -1,5 +1,6 @@
 /target
 /tmp
 /.vscode
+examples/test*
 
 output*
