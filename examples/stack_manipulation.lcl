@@ -1,2 +1,5 @@
-// dup - duplicates top value on stack
 10 dup . .
+1 2 drop .
+1 2 3 4 swap . .
+1 2 3 over . . .
+1 2 3 rot . . .

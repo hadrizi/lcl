@@ -176,6 +176,35 @@ pub fn compile(program: Vec<Token>) -> Result<(), Error> {
                     writeln!(output, "\tpush rax")?;
                     writeln!(output, "\tpush rax")?;
                 }
+                "drop" => {
+                    writeln!(output, "\t; DROP")?;
+                    writeln!(output, "\tpop rax")?;
+                    writeln!(output, "\txor rax, rax")?;
+                }
+                "swap" => {
+                    writeln!(output, "\t; SWAP")?;
+                    writeln!(output, "\tpop rax")?;
+                    writeln!(output, "\tpop rbx")?;
+                    writeln!(output, "\tpush rbx")?;
+                    writeln!(output, "\tpush rax")?;
+                }
+                "over" => {
+                    writeln!(output, "\t; OVER")?;
+                    writeln!(output, "\tpop rax")?;
+                    writeln!(output, "\tpop rbx")?;
+                    writeln!(output, "\tpush rax")?;
+                    writeln!(output, "\tpush rbx")?;
+                    writeln!(output, "\tpush rax")?;
+                }
+                "rot" => {
+                    writeln!(output, "\t; ROT")?;
+                    writeln!(output, "\tpop rax")?;
+                    writeln!(output, "\tpop rbx")?;
+                    writeln!(output, "\tpop rcx")?;
+                    writeln!(output, "\tpush rbx")?;
+                    writeln!(output, "\tpush rcx")?;
+                    writeln!(output, "\tpush rax")?;
+                }
                 _ => {
                     return Err(Error::new(
                         std::io::ErrorKind::Other,
