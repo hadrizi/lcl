@@ -125,12 +125,12 @@ pub fn compile(program: Vec<Token>) -> Result<(), Error> {
                 writeln!(output, "\t; If")?;
                 writeln!(output, "\tpop rax")?;
                 writeln!(output, "\ttest rax, rax")?;
-                writeln!(output, "\tjz .e{}", &idx)?;
+                writeln!(output, "\tjz e{}", &idx)?;
                 markers.push((idx, op.loc.clone()));
             }
             TokenType::Else => {
-                writeln!(output, "\tjmp .e{}", &idx)?;
-                writeln!(output, ".e{}:", markers.pop().unwrap().0)?;
+                writeln!(output, "\tjmp e{}", &idx)?;
+                writeln!(output, "e{}:", markers.pop().unwrap().0)?;
                 markers.push((idx, op.loc.clone()));
             }
             TokenType::While => {
@@ -144,7 +144,7 @@ pub fn compile(program: Vec<Token>) -> Result<(), Error> {
                     writeln!(output, "\t; Do:end of loop condition")?;
                     writeln!(output, "\tpop rax")?;
                     writeln!(output, "\ttest rax, rax")?;
-                    writeln!(output, "\tjz .e{}", &i)?;
+                    writeln!(output, "\tjz e{}", &i)?;
                 } else {
                     return Err(Error::new(
                         std::io::ErrorKind::Other,
@@ -158,9 +158,9 @@ pub fn compile(program: Vec<Token>) -> Result<(), Error> {
                     match program[i].ttype {
                         TokenType::While => {
                             writeln!(output, "\tjmp l{}", i)?;
-                            writeln!(output, ".e{}:", i)?;
+                            writeln!(output, "e{}:", i)?;
                         }
-                        _ => writeln!(output, ".e{}:", i)?,
+                        _ => writeln!(output, "e{}:", i)?,
                     };
                 } else {
                     return Err(Error::new(
@@ -182,19 +182,19 @@ pub fn compile(program: Vec<Token>) -> Result<(), Error> {
                     writeln!(output, "\txor rax, rax")?;
                 }
                 "swap" => {
-                    writeln!(output, "\t; SWAP")?;
-                    writeln!(output, "\tpop rax")?;
-                    writeln!(output, "\tpop rbx")?;
-                    writeln!(output, "\tpush rbx")?;
-                    writeln!(output, "\tpush rax")?;
+                    writeln!(output, "\t; SWAP")?; // 1 2
+                    writeln!(output, "\tpop rax")?; // 1 rax = 2
+                    writeln!(output, "\tpop rbx")?; // rax = 2 rbx = 1
+                    writeln!(output, "\tpush rax")?; // 1
+                    writeln!(output, "\tpush rbx")?; // 2 1
                 }
                 "over" => {
-                    writeln!(output, "\t; OVER")?;
-                    writeln!(output, "\tpop rax")?;
-                    writeln!(output, "\tpop rbx")?;
-                    writeln!(output, "\tpush rax")?;
+                    writeln!(output, "\t; OVER")?; // 1 2
+                    writeln!(output, "\tpop rax")?; // 1 rax=2
+                    writeln!(output, "\tpop rbx")?; // rax=2 rbx=1
                     writeln!(output, "\tpush rbx")?;
                     writeln!(output, "\tpush rax")?;
+                    writeln!(output, "\tpush rbx")?;
                 }
                 "rot" => {
                     writeln!(output, "\t; ROT")?;
