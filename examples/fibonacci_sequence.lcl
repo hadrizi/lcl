@@ -1,0 +1,30 @@
+/*
+    https://en.wikipedia.org/wiki/Fibonacci_number
+
+    The sequence starts from 0 and 1, each number is the sum of the two preceding ones
+*/
+
+mem 0 @
+mem 8 + 1 @
+
+0
+while dup 10 < do
+    // Get first value from memory
+    mem !
+    // 
+    dup .
+
+    mem 8 + !
+    dup .
+    
+    +
+    mem swap @
+    
+    mem !
+    mem 8 + !
+    +
+    
+    mem 8 + swap @
+
+    1 +
+end
