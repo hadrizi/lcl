@@ -37,7 +37,7 @@ fn main() {
     let args = Args::parse();
     match args.input {
         Some(input) => {
-            let program = match read_program(input.to_str().unwrap()) {
+            let mut program = match read_program(input.to_str().unwrap()) {
                 Ok(p) => p,
                 Err(e) => {
                     eprintln!("{}", e);
@@ -49,7 +49,7 @@ fn main() {
                 default.set_file_name("output");
                 return default;
             });
-            if let Err(e) = compile(program, out.to_str().unwrap()) {
+            if let Err(e) = compile(&mut program, out.to_str().unwrap()) {
                 eprintln!("{}", e);
                 exit(1);
             };

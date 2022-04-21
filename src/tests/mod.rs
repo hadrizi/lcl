@@ -35,9 +35,12 @@ macro_rules! compiler_test {
         #[test]
         fn $name() {
             let src: &str = $src;
+            let outfile = format!("src/tests/test_{}", stringify!($name));
 
-            let got = tokenize(src, "<test>");
-            assert!(got.is_err(), "{:?} should be an error", got);
+            let mut tokens: Vec<Token> = tokenize(src, "<test>").unwrap();
+            let result = compile(&mut tokens, &outfile);
+
+            assert!(result.is_err(), "{:?} should be an error", result);
         }
     };
     ($name:ident, $src:expr => $should_be:expr) => {
@@ -48,8 +51,8 @@ macro_rules! compiler_test {
             let should_be = $should_be;
             let outfile = format!("src/tests/test_{}", stringify!($name));
 
-            let tokens: Vec<Token> = tokenize(src, "<test>").unwrap();
-            compile(tokens, &outfile).unwrap();
+            let mut tokens: Vec<Token> = tokenize(src, "<test>").unwrap();
+            compile(&mut tokens, &outfile).unwrap();
             let output = Command::new(&outfile).output().unwrap();
             let result = from_utf8(&output.stdout).unwrap();
 

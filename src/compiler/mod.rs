@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{Error, Write},
+    io::{BufWriter, Error, Result, Write},
     process::Command,
     str::from_utf8,
 };
@@ -10,247 +10,217 @@ use crate::{
     lib::utils::Location,
 };
 
-pub fn compile(program: Vec<Token>, out: &str) -> Result<(), Error> {
-    let mut output =
-        File::create(format!("{}.{}", &out, "asm")).expect("failed to create asm file");
-    let mut markers = Vec::<(usize, Location)>::new();
-    let mem_capacity = 262144;
+struct Compiler {
+    handler: BufWriter<File>,
+    markers: Vec<(usize, Location)>,
+    mem_capacity: i32,
+}
 
-    writeln!(output, "global _start")?;
-    writeln!(output, "section .text")?;
+impl Compiler {
+    fn new(outfile: &str) -> Self {
+        let file =
+            File::create(format!("{}.{}", &outfile, "asm")).expect("failed to create asm file");
+        let handler = BufWriter::new(file);
+        Self {
+            handler,
+            mem_capacity: 262144,
+            markers: Vec::new(),
+        }
+    }
 
-    // Print function
-    writeln!(output, "print:")?;
-    writeln!(output, "\tsub     rsp, 40")?;
-    writeln!(output, "\tmov     rsi, rdi")?;
-    writeln!(output, "\tmov     r10, -3689348814741910323")?;
-    writeln!(output, "\tmov     BYTE [rsp+19], 10")?;
-    writeln!(output, "\tlea     rcx, [rsp+18]")?;
-    writeln!(output, "\tlea     r8, [rsp+20]")?;
-    writeln!(output, ".L2:")?;
-    writeln!(output, "\tmov     rax, rsi")?;
-    writeln!(output, "\tmov     r9, r8")?;
-    writeln!(output, "\tmul     r10")?;
-    writeln!(output, "\tmov     rax, rsi")?;
-    writeln!(output, "\tsub     r9, rcx")?;
-    writeln!(output, "\tshr     rdx, 3")?;
-    writeln!(output, "\tlea     rdi, [rdx+rdx*4]")?;
-    writeln!(output, "\tadd     rdi, rdi")?;
-    writeln!(output, "\tsub     rax, rdi")?;
-    writeln!(output, "\tadd     eax, 48")?;
-    writeln!(output, "\tmov     BYTE [rcx], al")?;
-    writeln!(output, "\tmov     rax, rsi")?;
-    writeln!(output, "\tmov     rsi, rdx")?;
-    writeln!(output, "\tmov     rdx, rcx")?;
-    writeln!(output, "\tsub     rcx, 1")?;
-    writeln!(output, "\tcmp     rax, 9")?;
-    writeln!(output, "\tja      .L2")?;
-    writeln!(output, "\tsub     rdx, r8")?;
-    writeln!(output, "\tmov     edi, 1")?;
-    writeln!(output, "\txor     eax, eax")?;
-    writeln!(output, "\tlea     rsi, [rsp+20+rdx]")?;
-    writeln!(output, "\tmov     rdx, r9")?;
-    writeln!(output, "\tmov     rax, 1")?;
-    writeln!(output, "\tsyscall")?;
-    writeln!(output, "\tadd     rsp, 40")?;
-    writeln!(output, "\tret")?;
+    fn translate_tokens(&mut self, program: &Vec<Token>) -> Result<()> {
+        self.headers()?;
+        for (idx, token) in program.iter().enumerate() {
+            let asm = self.to_asm(token, idx, program)?;
+            writeln!(self.handler, "{}", asm)?;
+        }
+        self.footers()?;
 
-    writeln!(output, "_start:")?;
-    for (idx, op) in program.iter().enumerate() {
-        match &op.ttype {
+        if !self.markers.is_empty() {
+            return Err(Error::new(
+                std::io::ErrorKind::Other,
+                format!(
+                    "CompilationError: not enclosed block at {}",
+                    self.markers.last().unwrap().1
+                ),
+            ));
+        }
+
+        self.flush()?;
+        Ok(())
+    }
+
+    fn to_asm(&mut self, token: &Token, idx: usize, program: &Vec<Token>) -> Result<String> {
+        match &token.ttype {
             TokenType::Integer(x) => {
-                writeln!(output, "\t; Push({})", &x)?;
-                writeln!(output, "\tmov  rax, {}", &x)?;
-                writeln!(output, "\tpush rax")?;
+                Ok(format!("\t; Push({0})\n\tmov  rax, {0}\n\tpush rax", x))
             }
             TokenType::Plus => {
-                writeln!(output, "\t; Plus")?;
-                writeln!(output, "\tpop  rax")?;
-                writeln!(output, "\tpop  rbx")?;
-                writeln!(output, "\tadd  rax, rbx")?;
-                writeln!(output, "\tpush rax")?;
+                Ok(format!("\t; Plus\n\tpop  rax\n\tpop  rbx\n\tadd  rax, rbx\n\tpush rax"))
             }
             TokenType::Minus => {
-                writeln!(output, "\t; Minus")?;
-                writeln!(output, "\tpop  rax")?;
-                writeln!(output, "\tpop  rbx")?;
-                writeln!(output, "\tsub  rbx, rax")?;
-                writeln!(output, "\tpush rbx")?;
+                Ok(format!("\t; Minus\n\tpop  rax\n\tpop  rbx\n\tsub  rbx, rax\n\tpush rbx"))
             }
             TokenType::Dot => {
-                writeln!(output, "\t; Dot")?;
-                writeln!(output, "\tpop  rdi")?;
-                writeln!(output, "\tcall print")?;
+                Ok(format!("\t; Dot\n\tpop  rdi\n\tcall print"))
             }
             TokenType::Less => {
-                writeln!(output, "\t; Less")?;
-                writeln!(output, "\tmov rcx, 0")?;
-                writeln!(output, "\tmov rdx, 1")?;
-                writeln!(output, "\tpop rbx")?;
-                writeln!(output, "\tpop rax")?;
-                writeln!(output, "\tcmp rax, rbx")?;
-                writeln!(output, "\tcmovl rcx, rdx")?;
-                writeln!(output, "\tpush rcx")?;
+                Ok(format!("\t; Less\n\tmov rcx, 0\n\tmov rdx, 1\n\tpop rbx\n\tpop rax\n\tcmp rax, rbx\n\tcmovl rcx, rdx\n\tpush rcx"))
             }
             TokenType::Greater => {
-                writeln!(output, "\t; Greater")?;
-                writeln!(output, "\tmov rcx, 0")?;
-                writeln!(output, "\tmov rdx, 1")?;
-                writeln!(output, "\tpop rbx")?;
-                writeln!(output, "\tpop rax")?;
-                writeln!(output, "\tcmp rax, rbx")?;
-                writeln!(output, "\tcmovg rcx, rdx")?;
-                writeln!(output, "\tpush rcx")?;
+                Ok(format!("\t; Greater\n\tmov rcx, 0\n\tmov rdx, 1\n\tpop rbx\n\tpop rax\n\tcmp rax, rbx\n\tcmovg rcx, rdx\n\tpush rcx"))
             }
             TokenType::Equal => {
-                writeln!(output, "\t; Equal")?;
-                writeln!(output, "\tmov rcx, 0")?;
-                writeln!(output, "\tmov rdx, 1")?;
-                writeln!(output, "\tpop rax")?;
-                writeln!(output, "\tpop rbx")?;
-                writeln!(output, "\tcmp rax, rbx")?;
-                writeln!(output, "\tcmove rcx, rdx")?;
-                writeln!(output, "\tpush rcx")?;
+                Ok(format!("\t; Equal\n\tmov rcx, 0\n\tmov rdx, 1\n\tpop rax\n\tpop rbx\n\tcmp rax, rbx\n\tcmove rcx, rdx\n\tpush rcx"))
             }
             TokenType::NotEqual => {
-                writeln!(output, "\t; NotEqual")?;
-                writeln!(output, "\tmov rcx, 0")?;
-                writeln!(output, "\tmov rdx, 1")?;
-                writeln!(output, "\tpop rax")?;
-                writeln!(output, "\tpop rbx")?;
-                writeln!(output, "\tcmp rax, rbx")?;
-                writeln!(output, "\tcmovne rcx, rdx")?;
-                writeln!(output, "\tpush rcx")?;
+                Ok(format!("\t; NotEqual\n\tmov rcx, 0\n\tmov rdx, 1\n\tpop rax\n\tpop rbx\n\tcmp rax, rbx\n\tcmovne rcx, rdx\n\tpush rcx"))
             }
             TokenType::If => {
-                writeln!(output, "\t; If")?;
-                writeln!(output, "\tpop rax")?;
-                writeln!(output, "\ttest rax, rax")?;
-                writeln!(output, "\tjz e{}", &idx)?;
-                markers.push((idx, op.loc.clone()));
+                self.markers.push((idx, token.loc.clone()));
+                Ok(format!("\t; If\n\tpop rax\n\ttest rax, rax\n\tjz e{}", idx))
             }
             TokenType::Else => {
-                writeln!(output, "\tjmp e{}", &idx)?;
-                writeln!(output, "e{}:", markers.pop().unwrap().0)?;
-                markers.push((idx, op.loc.clone()));
-            }
-            TokenType::While => {
-                writeln!(output, "\t; While:start of loop condition")?;
-                writeln!(output, "l{}:", &idx)?;
-                markers.push((idx, op.loc.clone()));
-            }
-            TokenType::Do => {
-                if !markers.is_empty() {
-                    let i = markers.last().unwrap().0;
-                    writeln!(output, "\t; Do:end of loop condition")?;
-                    writeln!(output, "\tpop rax")?;
-                    writeln!(output, "\ttest rax, rax")?;
-                    writeln!(output, "\tjz e{}", &i)?;
+                if let Some((m, _)) = self.markers.pop() {
+                    let r = format!("\tjmp e{}\ne{}:", idx, &m);
+                    self.markers.push((idx, token.loc.clone()));
+                    Ok(r)
                 } else {
                     return Err(Error::new(
                         std::io::ErrorKind::Other,
-                        format!("CompilationError: unexpected do at {}", op.loc),
+                        format!("CompilationError: unexpected `else` at {}", token.loc),
+                    ));
+                }
+            }
+            TokenType::While => {
+                self.markers.push((idx, token.loc.clone()));
+                Ok(format!("\t; While:start of loop condition\nl{}:", idx))
+            }
+            TokenType::Do => {
+                if let Some((m, _)) = self.markers.last() {
+                    Ok(format!("\t; Do:end of loop condition\n\tpop rax\n\ttest rax, rax\n\tjz e{}", m))
+                } else {
+                    return Err(Error::new(
+                        std::io::ErrorKind::Other,
+                        format!("CompilationError: unexpected `do` at {}", token.loc),
                     ));
                 }
             }
             TokenType::End => {
-                if !markers.is_empty() {
-                    let i = markers.pop().unwrap().0;
-                    match program[i].ttype {
+                if let Some((m, _)) = self.markers.pop() {
+                    match program[m].ttype {
                         TokenType::While => {
-                            writeln!(output, "\tjmp l{}", i)?;
-                            writeln!(output, "e{}:", i)?;
+                            Ok(format!("\tjmp l{0}\ne{0}:", &m))
                         }
-                        _ => writeln!(output, "e{}:", i)?,
-                    };
+                        _ => Ok(format!("e{}:", &m))
+                    }
                 } else {
                     return Err(Error::new(
                         std::io::ErrorKind::Other,
-                        format!("CompilationError: unexpected end of block at {}", op.loc),
+                        format!("CompilationError: unexpected end of block at {}", token.loc),
                     ));
                 }
             }
             TokenType::Identifier(ident) => match ident.as_str() {
                 "dup" => {
-                    writeln!(output, "\t; DUP")?;
-                    writeln!(output, "\tpop rax")?;
-                    writeln!(output, "\tpush rax")?;
-                    writeln!(output, "\tpush rax")?;
+                    Ok(format!("\t; DUP\n\tpop rax\n\tpush rax\n\tpush rax"))
                 }
                 "drop" => {
-                    writeln!(output, "\t; DROP")?;
-                    writeln!(output, "\tpop rax")?;
-                    writeln!(output, "\txor rax, rax")?;
+                    Ok(format!("\t; DROP\n\tpop rax\n\txor rax, rax"))
                 }
                 "swap" => {
-                    writeln!(output, "\t; SWAP")?; // 1 2
-                    writeln!(output, "\tpop rax")?; // 1 rax = 2
-                    writeln!(output, "\tpop rbx")?; // rax = 2 rbx = 1
-                    writeln!(output, "\tpush rax")?; // 1
-                    writeln!(output, "\tpush rbx")?; // 2 1
+                    Ok(format!("\t; SWAP\n\tpop rax\n\tpop rbx\n\tpush rax\n\tpush rbx"))
                 }
                 "over" => {
-                    writeln!(output, "\t; OVER")?; // 1 2
-                    writeln!(output, "\tpop rax")?; // 1 rax=2
-                    writeln!(output, "\tpop rbx")?; // rax=2 rbx=1
-                    writeln!(output, "\tpush rbx")?;
-                    writeln!(output, "\tpush rax")?;
-                    writeln!(output, "\tpush rbx")?;
+                    Ok(format!("\t; OVER\n\tpop rax\n\tpop rbx\n\tpush rbx\n\tpush rax\n\tpush rbx"))
                 }
                 "rot" => {
-                    writeln!(output, "\t; ROT")?;
-                    writeln!(output, "\tpop rax")?;
-                    writeln!(output, "\tpop rbx")?;
-                    writeln!(output, "\tpop rcx")?;
-                    writeln!(output, "\tpush rbx")?;
-                    writeln!(output, "\tpush rax")?;
-                    writeln!(output, "\tpush rcx")?;
+                    Ok(format!("\t; ROT\n\tpop rax\n\tpop rbx\n\tpop rcx\n\tpush rbx\n\tpush rax\n\tpush rcx"))
                 }
                 _ => {
                     return Err(Error::new(
                         std::io::ErrorKind::Other,
-                        format!("CompilationError: {} is not defined at {}", ident, op.loc),
+                        format!("CompilationError: {} is not defined at {}", ident, token.loc),
                     ))
                 }
             },
             TokenType::Mem => {
-                writeln!(output, "\t; MEM")?;
-                writeln!(output, "\tpush mem")?;
+                Ok(format!("\t; MEM\n\tpush mem"))
             }
             TokenType::Store => {
-                writeln!(output, "\t; Store")?;
-                writeln!(output, "\tpop rax")?;
-                writeln!(output, "\tpop rbx")?;
-                writeln!(output, "\tmov [rbx], rax")?;
+                Ok(format!("\t; Store\n\tpop rax\n\tpop rbx\n\tmov [rbx], rax"))
             }
             TokenType::Load => {
-                writeln!(output, "\t; Load")?;
-                writeln!(output, "\tpop rax")?;
-                writeln!(output, "\txor rbx, rbx")?;
-                writeln!(output, "\tmov rbx, [rax]")?;
-                writeln!(output, "\tpush rbx")?;
+                Ok(format!("\t; Load\n\tpop rax\n\txor rbx, rbx\n\tmov rbx, [rax]\n\tpush rbx"))
             }
         }
     }
 
-    if !markers.is_empty() {
-        return Err(Error::new(
-            std::io::ErrorKind::Other,
-            format!(
-                "CompilationError: not enclosed block at {}",
-                markers.last().unwrap().1
-            ),
-        ));
+    fn headers(&mut self) -> Result<()> {
+        writeln!(self.handler, "global _start")?;
+        writeln!(self.handler, "section .text")?;
+
+        // Print function
+        writeln!(self.handler, "print:")?;
+        writeln!(self.handler, "\tsub     rsp, 40")?;
+        writeln!(self.handler, "\tmov     rsi, rdi")?;
+        writeln!(self.handler, "\tmov     r10, -3689348814741910323")?;
+        writeln!(self.handler, "\tmov     BYTE [rsp+19], 10")?;
+        writeln!(self.handler, "\tlea     rcx, [rsp+18]")?;
+        writeln!(self.handler, "\tlea     r8, [rsp+20]")?;
+        writeln!(self.handler, ".L2:")?;
+        writeln!(self.handler, "\tmov     rax, rsi")?;
+        writeln!(self.handler, "\tmov     r9, r8")?;
+        writeln!(self.handler, "\tmul     r10")?;
+        writeln!(self.handler, "\tmov     rax, rsi")?;
+        writeln!(self.handler, "\tsub     r9, rcx")?;
+        writeln!(self.handler, "\tshr     rdx, 3")?;
+        writeln!(self.handler, "\tlea     rdi, [rdx+rdx*4]")?;
+        writeln!(self.handler, "\tadd     rdi, rdi")?;
+        writeln!(self.handler, "\tsub     rax, rdi")?;
+        writeln!(self.handler, "\tadd     eax, 48")?;
+        writeln!(self.handler, "\tmov     BYTE [rcx], al")?;
+        writeln!(self.handler, "\tmov     rax, rsi")?;
+        writeln!(self.handler, "\tmov     rsi, rdx")?;
+        writeln!(self.handler, "\tmov     rdx, rcx")?;
+        writeln!(self.handler, "\tsub     rcx, 1")?;
+        writeln!(self.handler, "\tcmp     rax, 9")?;
+        writeln!(self.handler, "\tja      .L2")?;
+        writeln!(self.handler, "\tsub     rdx, r8")?;
+        writeln!(self.handler, "\tmov     edi, 1")?;
+        writeln!(self.handler, "\txor     eax, eax")?;
+        writeln!(self.handler, "\tlea     rsi, [rsp+20+rdx]")?;
+        writeln!(self.handler, "\tmov     rdx, r9")?;
+        writeln!(self.handler, "\tmov     rax, 1")?;
+        writeln!(self.handler, "\tsyscall")?;
+        writeln!(self.handler, "\tadd     rsp, 40")?;
+        writeln!(self.handler, "\tret")?;
+
+        writeln!(self.handler, "_start:")?;
+
+        Ok(())
     }
 
-    // exit syscall
-    writeln!(output, "\tmov rax, 60")?;
-    writeln!(output, "\tmov rdi, 0")?;
-    writeln!(output, "\tsyscall")?;
-    writeln!(output, "\tret")?;
+    fn footers(&mut self) -> Result<()> {
+        writeln!(self.handler, "\tmov rax, 60")?;
+        writeln!(self.handler, "\tmov rdi, 0")?;
+        writeln!(self.handler, "\tsyscall")?;
+        writeln!(self.handler, "\tret")?;
 
-    writeln!(output, "section .bss")?;
-    writeln!(output, "\tmem resq {}", mem_capacity)?;
+        writeln!(self.handler, "section .bss")?;
+        writeln!(self.handler, "\tmem resq {}", self.mem_capacity)?;
+
+        Ok(())
+    }
+
+    fn flush(&mut self) -> Result<()> {
+        self.handler.flush()
+    }
+}
+
+pub fn compile(program: &mut Vec<Token>, out: &str) -> Result<()> {
+    let mut compiler = Compiler::new(out);
+    compiler.translate_tokens(program)?;
 
     let output = Command::new("nasm")
         .args(["-felf64", format!("{}.{}", &out, "asm").as_str()])

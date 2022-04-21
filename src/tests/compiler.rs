@@ -54,3 +54,8 @@ compiler_test!(
         1 + 
     end" => "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n"
 );
+
+compiler_test!(FAIL: unexpected_else, "1 2 3 else 1 2 3");
+compiler_test!(FAIL: unexpected_do, "1 2 3 do 1 2 3");
+compiler_test!(FAIL: unexpected_end_of_block, "1 2 3 end 1 2 3");
+compiler_test!(FAIL: not_defined, "asd");
