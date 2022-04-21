@@ -53,7 +53,7 @@ impl FromStr for TokenType {
             "do" => Ok(Self::Do),
             "mem" => Ok(Self::Mem),
             _ if s.parse::<i64>().is_ok() => tokenize_number(s),
-            _ if s.starts_with("_") || s.chars().next().unwrap().is_alphabetic() => {
+            _ if s.starts_with('_') || s.chars().next().unwrap().is_alphabetic() => {
                 tokenize_identifier(s)
             }
             _ => Err(LexingError::Syntax(s.to_string())),

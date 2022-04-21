@@ -53,8 +53,6 @@ impl fmt::Display for LexingError {
 
 impl Error for LexingError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match *self {
-            _ => None,
-        }
+        None
     }
 }

@@ -32,7 +32,7 @@ impl Stack {
     }
 }
 
-pub struct REPL {
+pub struct Repl {
     stack: Stack,
     prompt: String,
     memory: [i64; 262144],
@@ -41,12 +41,12 @@ pub struct REPL {
     error_handle: BufWriter<Stderr>,
 }
 
-impl REPL {
+impl Repl {
     pub fn new(prompt: &str) -> Self {
         let stdin = stdin();
         let stdout = stdout();
         let stderr = stderr();
-        REPL {
+        Repl {
             stack: Stack::new(),
             prompt: String::from(prompt),
             input_handle: BufReader::new(stdin),
@@ -166,12 +166,9 @@ impl REPL {
             match self.read() {
                 Ok(ops) => {
                     for op in ops {
-                        match self.eval(op) {
-                            Err(e) => {
-                                writeln!(self.error_handle, "{}", &e).unwrap();
-                                is_ok = false;
-                            }
-                            _ => {}
+                        if let Err(e) = self.eval(op) {
+                            writeln!(self.error_handle, "{}", &e).unwrap();
+                            is_ok = false;
                         };
                     }
                     if is_ok {

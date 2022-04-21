@@ -28,10 +28,10 @@ impl Compiler {
         }
     }
 
-    fn translate_tokens(&mut self, program: &Vec<Token>) -> Result<()> {
+    fn translate_tokens(&mut self, program: &[Token]) -> Result<()> {
         self.headers()?;
         for (idx, token) in program.iter().enumerate() {
-            let asm = self.to_asm(token, idx, program)?;
+            let asm = self.token_to_asm(token, idx, program)?;
             writeln!(self.handler, "{}", asm)?;
         }
         self.footers()?;
@@ -50,31 +50,31 @@ impl Compiler {
         Ok(())
     }
 
-    fn to_asm(&mut self, token: &Token, idx: usize, program: &Vec<Token>) -> Result<String> {
+    fn token_to_asm(&mut self, token: &Token, idx: usize, program: &[Token]) -> Result<String> {
         match &token.ttype {
             TokenType::Integer(x) => {
                 Ok(format!("\t; Push({0})\n\tmov  rax, {0}\n\tpush rax", x))
             }
             TokenType::Plus => {
-                Ok(format!("\t; Plus\n\tpop  rax\n\tpop  rbx\n\tadd  rax, rbx\n\tpush rax"))
+                Ok("\t; Plus\n\tpop  rax\n\tpop  rbx\n\tadd  rax, rbx\n\tpush rax".to_string())
             }
             TokenType::Minus => {
-                Ok(format!("\t; Minus\n\tpop  rax\n\tpop  rbx\n\tsub  rbx, rax\n\tpush rbx"))
+                Ok("\t; Minus\n\tpop  rax\n\tpop  rbx\n\tsub  rbx, rax\n\tpush rbx".to_string())
             }
             TokenType::Dot => {
-                Ok(format!("\t; Dot\n\tpop  rdi\n\tcall print"))
+                Ok("\t; Dot\n\tpop  rdi\n\tcall print".to_string())
             }
             TokenType::Less => {
-                Ok(format!("\t; Less\n\tmov rcx, 0\n\tmov rdx, 1\n\tpop rbx\n\tpop rax\n\tcmp rax, rbx\n\tcmovl rcx, rdx\n\tpush rcx"))
+                Ok("\t; Less\n\tmov rcx, 0\n\tmov rdx, 1\n\tpop rbx\n\tpop rax\n\tcmp rax, rbx\n\tcmovl rcx, rdx\n\tpush rcx".to_string())
             }
             TokenType::Greater => {
-                Ok(format!("\t; Greater\n\tmov rcx, 0\n\tmov rdx, 1\n\tpop rbx\n\tpop rax\n\tcmp rax, rbx\n\tcmovg rcx, rdx\n\tpush rcx"))
+                Ok("\t; Greater\n\tmov rcx, 0\n\tmov rdx, 1\n\tpop rbx\n\tpop rax\n\tcmp rax, rbx\n\tcmovg rcx, rdx\n\tpush rcx".to_string())
             }
             TokenType::Equal => {
-                Ok(format!("\t; Equal\n\tmov rcx, 0\n\tmov rdx, 1\n\tpop rax\n\tpop rbx\n\tcmp rax, rbx\n\tcmove rcx, rdx\n\tpush rcx"))
+                Ok("\t; Equal\n\tmov rcx, 0\n\tmov rdx, 1\n\tpop rax\n\tpop rbx\n\tcmp rax, rbx\n\tcmove rcx, rdx\n\tpush rcx".to_string())
             }
             TokenType::NotEqual => {
-                Ok(format!("\t; NotEqual\n\tmov rcx, 0\n\tmov rdx, 1\n\tpop rax\n\tpop rbx\n\tcmp rax, rbx\n\tcmovne rcx, rdx\n\tpush rcx"))
+                Ok("\t; NotEqual\n\tmov rcx, 0\n\tmov rdx, 1\n\tpop rax\n\tpop rbx\n\tcmp rax, rbx\n\tcmovne rcx, rdx\n\tpush rcx".to_string())
             }
             TokenType::If => {
                 self.markers.push((idx, token.loc.clone()));
@@ -123,19 +123,19 @@ impl Compiler {
             }
             TokenType::Identifier(ident) => match ident.as_str() {
                 "dup" => {
-                    Ok(format!("\t; DUP\n\tpop rax\n\tpush rax\n\tpush rax"))
+                    Ok("\t; DUP\n\tpop rax\n\tpush rax\n\tpush rax".to_string())
                 }
                 "drop" => {
-                    Ok(format!("\t; DROP\n\tpop rax\n\txor rax, rax"))
+                    Ok("\t; DROP\n\tpop rax\n\txor rax, rax".to_string())
                 }
                 "swap" => {
-                    Ok(format!("\t; SWAP\n\tpop rax\n\tpop rbx\n\tpush rax\n\tpush rbx"))
+                    Ok("\t; SWAP\n\tpop rax\n\tpop rbx\n\tpush rax\n\tpush rbx".to_string())
                 }
                 "over" => {
-                    Ok(format!("\t; OVER\n\tpop rax\n\tpop rbx\n\tpush rbx\n\tpush rax\n\tpush rbx"))
+                    Ok("\t; OVER\n\tpop rax\n\tpop rbx\n\tpush rbx\n\tpush rax\n\tpush rbx".to_string())
                 }
                 "rot" => {
-                    Ok(format!("\t; ROT\n\tpop rax\n\tpop rbx\n\tpop rcx\n\tpush rbx\n\tpush rax\n\tpush rcx"))
+                    Ok("\t; ROT\n\tpop rax\n\tpop rbx\n\tpop rcx\n\tpush rbx\n\tpush rax\n\tpush rcx".to_string())
                 }
                 _ => {
                     return Err(Error::new(
@@ -145,13 +145,13 @@ impl Compiler {
                 }
             },
             TokenType::Mem => {
-                Ok(format!("\t; MEM\n\tpush mem"))
+                Ok("\t; MEM\n\tpush mem".to_string())
             }
             TokenType::Store => {
-                Ok(format!("\t; Store\n\tpop rax\n\tpop rbx\n\tmov [rbx], rax"))
+                Ok("\t; Store\n\tpop rax\n\tpop rbx\n\tmov [rbx], rax".to_string())
             }
             TokenType::Load => {
-                Ok(format!("\t; Load\n\tpop rax\n\txor rbx, rbx\n\tmov rbx, [rax]\n\tpush rbx"))
+                Ok("\t; Load\n\tpop rax\n\txor rbx, rbx\n\tmov rbx, [rax]\n\tpush rbx".to_string())
             }
         }
     }
@@ -226,10 +226,10 @@ pub fn compile(program: &mut Vec<Token>, out: &str) -> Result<()> {
         .args(["-felf64", format!("{}.{}", &out, "asm").as_str()])
         .output()
         .expect("failed to run nasm");
-    if output.stderr.len() > 0 {
+    if !output.stderr.is_empty() {
         return Err(Error::new(
             std::io::ErrorKind::Other,
-            format!("{}", from_utf8(&output.stderr).unwrap()),
+            from_utf8(&output.stderr).unwrap().to_string(),
         ));
     }
 
@@ -237,10 +237,10 @@ pub fn compile(program: &mut Vec<Token>, out: &str) -> Result<()> {
         .args(["-o", out, format!("{}.{}", &out, "o").as_str()])
         .output()
         .expect("failed to run ld");
-    if output.stderr.len() > 0 {
+    if !output.stderr.is_empty() {
         return Err(Error::new(
             std::io::ErrorKind::Other,
-            format!("{}", from_utf8(&output.stderr).unwrap()),
+            from_utf8(&output.stderr).unwrap().to_string(),
         ));
     }
 

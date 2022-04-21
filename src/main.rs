@@ -9,7 +9,7 @@ use compiler::compile;
 use lexer::tokenize;
 use lexer::tokens::Token;
 use lib::utils::LocatedResult;
-use repl::REPL;
+use repl::Repl;
 use std::fs;
 use std::path::PathBuf;
 use std::process::exit;
@@ -47,7 +47,7 @@ fn main() {
             let out = args.output.unwrap_or_else(|| {
                 let mut default = PathBuf::new();
                 default.set_file_name("output");
-                return default;
+                default
             });
             if let Err(e) = compile(&mut program, out.to_str().unwrap()) {
                 eprintln!("{}", e);
@@ -55,7 +55,7 @@ fn main() {
             };
         }
         _ => {
-            let mut repl = REPL::new(">> ");
+            let mut repl = Repl::new(">> ");
             repl.run_loop();
         }
     }
