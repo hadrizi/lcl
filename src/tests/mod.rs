@@ -17,7 +17,7 @@ macro_rules! lexer_test {
         #[test]
         fn $name() {
             let src: &str = $src;
-            let should_be = $should_be;
+            let should_be: Vec<TokenType> = $should_be;
 
             let got: Vec<TokenType> = tokenize(src, "<test>")
                 .unwrap()
@@ -41,6 +41,7 @@ macro_rules! compiler_test {
             let result = compile(&mut tokens, &outfile);
 
             assert!(result.is_err(), "{:?} should be an error", result);
+            remove_file(format!("{}.asm", &outfile)).unwrap();
         }
     };
     ($name:ident, $src:expr => $should_be:expr) => {

@@ -5,6 +5,7 @@ use super::utils::Location;
 
 #[derive(Debug)]
 pub enum LexingError {
+    RegisterIndex(String),
     ParsingNumber(String),
     ParsingIdentifier(String),
     Syntax(String),
@@ -38,6 +39,13 @@ impl fmt::Display for LexingError {
         match *self {
             Self::ParsingNumber(ref s) => {
                 write!(f, "\t{}\n\t^\nParsingNumberError: not a number", s)
+            }
+            Self::RegisterIndex(ref s) => {
+                write!(
+                    f,
+                    "\t{}\n\t  ^\nRegisterIndexError: is not a valid register index",
+                    s
+                )
             }
             Self::ParsingIdentifier(ref s) => write!(
                 f,

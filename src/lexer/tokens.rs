@@ -12,19 +12,29 @@ pub struct Token {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum TokenType {
+pub enum TargetType {
     Integer(i64),
+    Regsiter(usize),
+    Memory,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum TokenType {
+    // Integer(i64),
     Identifier(String),
+    Push(TargetType),
+    Pop(TargetType),
     Dot,
     Plus,
     Minus,
+    Multiply,
+    Divide,
+    Mod,
     Less,
     Greater,
     Equal,
     NotEqual,
     Mem,
-    Load,
-    Store,
     If,
     Else,
     While,
@@ -39,20 +49,42 @@ impl FromStr for TokenType {
         match s {
             "+" => Ok(Self::Plus),
             "-" => Ok(Self::Minus),
+            "*" => Ok(Self::Multiply),
+            "/" => Ok(Self::Divide),
+            "%" => Ok(Self::Mod),
             "." => Ok(Self::Dot),
             "<" => Ok(Self::Less),
             ">" => Ok(Self::Greater),
             "=" => Ok(Self::Equal),
             "!=" => Ok(Self::NotEqual),
-            "!" => Ok(Self::Load),
-            "@" => Ok(Self::Store),
             "if" => Ok(Self::If),
             "else" => Ok(Self::Else),
             "end" => Ok(Self::End),
             "while" => Ok(Self::While),
             "do" => Ok(Self::Do),
             "mem" => Ok(Self::Mem),
-            _ if s.parse::<i64>().is_ok() => tokenize_number(s),
+            other if other.starts_with('!') && other.len() == 1 => {
+                Ok(Self::Push(TargetType::Memory))
+            }
+            other if other.starts_with('@') && other.len() == 1 => {
+                Ok(Self::Pop(TargetType::Memory))
+            }
+            other
+                if other.starts_with('!')
+                    && other.len() > 1
+                    && other[1..].parse::<i64>().is_ok() =>
+            {
+                Ok(Self::Push(tokenize_number(&other[1..])?))
+            }
+            other if other.starts_with('!') && other.len() > 1 && other[1..].starts_with('r') => {
+                Ok(Self::Push(tokenize_register(&other[2..])?))
+            }
+            other if other.starts_with('@') && other.len() > 1 && other[1..].starts_with('r') => {
+                Ok(Self::Pop(tokenize_register(&other[2..])?))
+            }
+            // "!" => Ok(Self::Push(TargetType::Memory)),
+            // "@" => Ok(Self::Pop(TargetType::Memory)),
+            _ if s.parse::<i64>().is_ok() => Ok(Self::Push(tokenize_number(s)?)),
             _ if s.starts_with('_') || s.chars().next().unwrap().is_alphabetic() => {
                 tokenize_identifier(s)
             }
@@ -61,11 +93,19 @@ impl FromStr for TokenType {
     }
 }
 
-fn tokenize_number(number: &str) -> LexingResult<TokenType> {
+fn tokenize_number(number: &str) -> LexingResult<TargetType> {
     if let Ok(n) = number.parse::<i64>() {
-        Ok(TokenType::Integer(n))
+        Ok(TargetType::Integer(n))
     } else {
         Err(LexingError::ParsingNumber(number.to_string()))
+    }
+}
+
+fn tokenize_register(number: &str) -> LexingResult<TargetType> {
+    if let Ok(n) = number.parse::<usize>() {
+        Ok(TargetType::Regsiter(n))
+    } else {
+        Err(LexingError::RegisterIndex(number.to_string()))
     }
 }
 

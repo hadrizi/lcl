@@ -6,7 +6,7 @@ use std::{
 };
 
 use crate::{
-    lexer::tokens::{Token, TokenType},
+    lexer::tokens::{TargetType, Token, TokenType},
     lib::utils::Location,
 };
 
@@ -52,9 +52,6 @@ impl Compiler {
 
     fn token_to_asm(&mut self, token: &Token, idx: usize, program: &[Token]) -> Result<String> {
         match &token.ttype {
-            TokenType::Integer(x) => {
-                Ok(format!("\t; Push({0})\n\tmov  rax, {0}\n\tpush rax", x))
-            }
             TokenType::Plus => {
                 Ok("\t; Plus\n\tpop  rax\n\tpop  rbx\n\tadd  rax, rbx\n\tpush rax".to_string())
             }
@@ -147,12 +144,26 @@ impl Compiler {
             TokenType::Mem => {
                 Ok("\t; MEM\n\tpush mem".to_string())
             }
-            TokenType::Store => {
-                Ok("\t; Store\n\tpop rax\n\tpop rbx\n\tmov [rbx], rax".to_string())
+            TokenType::Push(target) => {
+                match target {
+                    TargetType::Integer(n) => Ok(format!("\t; Push {0}\n\tmov  rax, {0}\n\tpush rax", n)),
+                    TargetType::Memory => Ok("\t; Load\n\tpop rax\n\txor rbx, rbx\n\tmov rbx, [rax]\n\tpush rbx".to_string()),
+                    TargetType::Regsiter(_) => todo!(),
+                }
             }
-            TokenType::Load => {
-                Ok("\t; Load\n\tpop rax\n\txor rbx, rbx\n\tmov rbx, [rax]\n\tpush rbx".to_string())
+            TokenType::Pop(target) => {
+                match target {
+                    TargetType::Memory => Ok("\t; Store\n\tpop rax\n\tpop rbx\n\tmov [rbx], rax".to_string()),
+                    TargetType::Regsiter(_) => todo!(),
+                    TargetType::Integer(_) => Err(Error::new(
+                        std::io::ErrorKind::Other, 
+                        format!("CompilationError: cannot pop from immediate integer value at {}", token.loc)
+                    )),
+                }
             }
+            TokenType::Multiply => unimplemented!(),
+            TokenType::Divide => unimplemented!(),
+            TokenType::Mod => unimplemented!(),
         }
     }
 

@@ -6,6 +6,9 @@ use std::fs::remove_file;
 use std::process::Command;
 use std::str::from_utf8;
 
+// Push/Pop
+compiler_test!(compile_push_int, "!1 ." => "1\n");
+
 // Arithmetics
 compiler_test!(compile_plus, "2 2 + ." => "4\n");
 compiler_test!(compile_minus, "5 2 - ." => "3\n");

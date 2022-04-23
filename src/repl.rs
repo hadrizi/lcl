@@ -81,9 +81,6 @@ impl Repl {
 
     fn eval(&mut self, op: Token) -> Result<(), Error> {
         match op.ttype {
-            TokenType::Integer(x) => {
-                self.stack.push(x);
-            }
             TokenType::Plus => {
                 let a = self.stack.pop()?;
                 let b = self.stack.pop()?;
@@ -142,16 +139,19 @@ impl Repl {
                 "control flow is not supported in the interactive shell",
             )?,
             TokenType::Mem => self.stack.push(0),
-            TokenType::Load => {
+            TokenType::Push(_) => {
                 let a = self.stack.pop()?;
                 let b = self.memory[a as usize];
                 self.stack.push(b);
             }
-            TokenType::Store => {
+            TokenType::Pop(_) => {
                 let a = self.stack.pop()?;
                 let b = self.stack.pop()?;
                 self.memory[b as usize] = a;
             }
+            TokenType::Multiply => unimplemented!(),
+            TokenType::Divide => unimplemented!(),
+            TokenType::Mod => unimplemented!(),
         }
         Ok(())
     }

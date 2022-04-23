@@ -3,4 +3,4 @@
 /.vscode
 examples/test*
 
-output*
+/build
