@@ -148,13 +148,19 @@ impl Compiler {
                 match target {
                     TargetType::Integer(n) => Ok(format!("\t; Push {0}\n\tmov  rax, {0}\n\tpush rax", n)),
                     TargetType::Memory => Ok("\t; Load\n\tpop rax\n\txor rbx, rbx\n\tmov rbx, [rax]\n\tpush rbx".to_string()),
-                    TargetType::Regsiter(_) => todo!(),
+                    TargetType::Regsiter(i) => {
+                        let reg = self.get_register(*i)?;
+                        Ok(format!("\t; Push {0}\n\tpush {0}", reg))
+                    },
                 }
             }
             TokenType::Pop(target) => {
                 match target {
                     TargetType::Memory => Ok("\t; Store\n\tpop rax\n\tpop rbx\n\tmov [rbx], rax".to_string()),
-                    TargetType::Regsiter(_) => todo!(),
+                    TargetType::Regsiter(i) => {
+                        let reg = self.get_register(*i)?;
+                        Ok(format!("\t; Pop {0}\n\tpop {0}", reg))
+                    },
                     TargetType::Integer(_) => Err(Error::new(
                         std::io::ErrorKind::Other, 
                         format!("CompilationError: cannot pop from immediate integer value at {}", token.loc)
@@ -164,6 +170,19 @@ impl Compiler {
             TokenType::Multiply => unimplemented!(),
             TokenType::Divide => unimplemented!(),
             TokenType::Mod => unimplemented!(),
+        }
+    }
+
+    fn get_register(&self, idx: usize) -> Result<String> {
+        match &idx {
+            1 => Ok("rax".to_string()),
+            2 => Ok("rbx".to_string()),
+            3 => Ok("rcx".to_string()),
+            4 => Ok("rdx".to_string()),
+            _ => Err(Error::new(
+                std::io::ErrorKind::Other, 
+                format!("CompilationError: invalid register index {}", idx)
+            ))
         }
     }
 
