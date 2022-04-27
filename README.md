@@ -15,7 +15,9 @@ Experimental stack-oriented programming language. Memory edition.
         3. [Stack manipulation](#stack-manipulation)
         5. [Misc](#misc)
     3. [Control flow](#control-flow)
-    4. [Comments](#comments)
+    4. [Functions](#functions)
+        1. [Returning functions](#returning-functions)
+    5. [Comments](#comments)
 4. [Interactive shell](#interactive-shell)
 
 
@@ -134,6 +136,38 @@ Example:
 end
 ```
 The code above prints numbers from 0 to 9
+
+### Functions
+You can declare simple functions using keywod `fn`
+```
+fn your_function do
+    1 .
+end
+```
+Functions can have local variables which will store values pushed before function call
+```
+fn add a b do
+    a b +
+end
+
+3 2 add .
+```
+in the code above, `a` will store `2` and `b` will store `3`, note that arguments are **moved** to the function, thus won't be available after function call.
+#### Returning functions
+Functions can return last pushed value of their stack frame to the stack frame they were called from.
+For example:
+```
+fn add a b do
+    a b +
+end
+```
+this function will return sum of `a` and `b` because its last operation pushes something on the stack. However:
+```
+fn print a do
+    a .
+end
+```
+won't return anything because `.` does not push anything to the stack.
 
 ### Comments
 Two types of comments are supported:

@@ -1,0 +1,11 @@
+fn with_args a b do
+    a b +
+end
+
+fn without_args do
+    1 .
+end
+
+3 2 with_args .
+
+without_args

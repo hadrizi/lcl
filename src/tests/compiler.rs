@@ -59,7 +59,24 @@ compiler_test!(
     end" => "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n"
 );
 
+// Functions
+compiler_test!(
+    compile_function_without_args,
+    "fn test do
+        1 .
+    end
+    test" => "1\n"
+);
+compiler_test!(
+    compile_function_with_args,
+    "fn add a b do
+        a b +
+    end
+    3 2 add ." => "5\n"
+);
+
 compiler_test!(FAIL: unexpected_else, "1 2 3 else 1 2 3");
 compiler_test!(FAIL: unexpected_do, "1 2 3 do 1 2 3");
 compiler_test!(FAIL: unexpected_end_of_block, "1 2 3 end 1 2 3");
 compiler_test!(FAIL: not_defined, "asd");
+compiler_test!(FAIL: unfinished_function, "fn test do");
