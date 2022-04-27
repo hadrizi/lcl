@@ -166,10 +166,6 @@ impl Repl {
                     self.memory[b as usize] = a;
                 }
             },
-            TokenType::Function => writeln!(
-                self.error_handle,
-                "functions are not supported in the interactive shell",
-            )?,
             TokenType::Multiply => unimplemented!(),
             TokenType::Divide => unimplemented!(),
             TokenType::Mod => unimplemented!(),
