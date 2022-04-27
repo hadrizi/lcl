@@ -5,12 +5,14 @@ Experimental stack-oriented programming language. Memory edition.
 1. [Usage](#usage)
 2. [Milestones](#milestones)
 3. [Language Basics](#language-basics)
-    1. [Numbers](#numbers)
+    1. [Push and Pop](#push-and-pop)
+        1. [Numbers](#numbers)
+        2. [Registers](#registers)
+        3. [Memory](#memory)
     2. [Built-ins](#built-ins)
         1. [Arithmetics](#arithmetics)
         2. [Comparison](#comparison)
         3. [Stack manipulation](#stack-manipulation)
-        4. [Memory](#memory)
         5. [Misc](#misc)
     3. [Control flow](#control-flow)
     4. [Comments](#comments)
@@ -42,14 +44,38 @@ OPTIONS:
 - [ ] Windows and MacOS support
 
 ## Language Basics
-### Numbers
-Number is a sequence of decimal digits. When one is encountered it's simply pushed onto the stack.
+### Push and Pop
+`!` and `@` are push and pop operations respectively, to perform an operation they should be prefixed to their targets.
+#### Numbers
+The simpliest way to put something on stack is to `push` immediate integer value
+```
+!1 !2 !3
+```
+Despite the fact that this notation is very explicit it may be daunting to put `!` every time in front of *each* value, thus `!` for immediate integer values is syntax-sugared: \
+`1 2 3` will be translated to `!1 !2 !3`
+#### Registers
+Another way to manipulate your values is to store them in registers. Currently there are four registers:
+- r1 - x86_64 `AX` register
+- r2 - x86_64 `BX` register
+- r3 - x86_64 `CX` register
+- r4 - x86_64 `DX` register
+To pop value from stack to register
+```
+1 @r1
+```
+code above will save `1` to `r1`
 
-Example:
+To push value from register to stack
 ```
-1 2 3
+!r1
 ```
-The code above pushes `1`, `2`, `3` onto the stack thus `3` is on top.
+code above will *copy* value stored in `r1` to the stack
+#### Memory
+| Keyword | Description |
+| ---     | ---         |
+| `mem`   | pointer to the beginning of the memory |
+| `@`     | stores value on top of the stack into memory |
+| `!`     | loads value from memory and pushes it onto the stack |
 
 ### Built-ins
 #### Arithmetics
@@ -77,13 +103,6 @@ The code above pushes `1`, `2`, `3` onto the stack thus `3` is on top.
 | `swap`  | swaps top two values of the stack |
 | `over`  | takes the second value from the top of the stack and duplicates it to the top of the stack |
 | `rot`   | “rotates” the top three values of the stack. The third element from the top of the stack gets moved to the top of the stack, pushing the other two values down |
-
-#### Memory
-| Keyword | Description |
-| ---     | ---         |
-| `mem`   | pointer to the beginning of the memory |
-| `@`     | stores value on top of the stack into memory |
-| `!`     | loads value from memory and pushes it onto the stack |
 
 #### Misc
 | Keyword | Description |
