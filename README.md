@@ -1,5 +1,5 @@
 # LCL
-Experimental stack-oriented programming language. Memory edition.
+Experimental stack-oriented programming language. Functions edition.
 
 ## Table of contents
 1. [Usage](#usage)
