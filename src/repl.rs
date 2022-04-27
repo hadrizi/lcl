@@ -139,16 +139,37 @@ impl Repl {
                 "control flow is not supported in the interactive shell",
             )?,
             TokenType::Mem => self.stack.push(0),
-            TokenType::Push(_) => {
-                let a = self.stack.pop()?;
-                let b = self.memory[a as usize];
-                self.stack.push(b);
-            }
-            TokenType::Pop(_) => {
-                let a = self.stack.pop()?;
-                let b = self.stack.pop()?;
-                self.memory[b as usize] = a;
-            }
+            TokenType::Push(target) => match target {
+                crate::lexer::tokens::TargetType::Integer(v) => self.stack.push(v),
+                crate::lexer::tokens::TargetType::Regsiter(_) => writeln!(
+                    self.error_handle,
+                    "registers are not available in the interactive shell",
+                )?,
+                crate::lexer::tokens::TargetType::Memory => {
+                    let a = self.stack.pop()?;
+                    let b = self.memory[a as usize];
+                    self.stack.push(b);
+                }
+            },
+            TokenType::Pop(target) => match target {
+                crate::lexer::tokens::TargetType::Integer(_) => writeln!(
+                    self.error_handle,
+                    "pop to immediate integer value is not allowed",
+                )?,
+                crate::lexer::tokens::TargetType::Regsiter(_) => writeln!(
+                    self.error_handle,
+                    "registers are not available in the interactive shell",
+                )?,
+                crate::lexer::tokens::TargetType::Memory => {
+                    let a = self.stack.pop()?;
+                    let b = self.stack.pop()?;
+                    self.memory[b as usize] = a;
+                }
+            },
+            TokenType::Function => writeln!(
+                self.error_handle,
+                "functions are not supported in the interactive shell",
+            )?,
             TokenType::Multiply => unimplemented!(),
             TokenType::Divide => unimplemented!(),
             TokenType::Mod => unimplemented!(),
