@@ -24,7 +24,7 @@ Experimental stack-oriented programming language. Memory edition.
 ## Usage
 ```
 lcl 0.3.0
-Experimental stack-oriented programming language. Memory edition.
+Experimental stack-oriented programming language. Functions edition.
 
 USAGE:
     lcl [OPTIONS] [INPUT]

@@ -1,6 +1,6 @@
 [package]
 name = "lcl"
-description = "Experimental stack-oriented programming language. Memory edition."
+description = "Experimental stack-oriented programming language. Functions edition."
 version = "0.9.0"
 edition = "2021"
 
