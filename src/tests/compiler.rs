@@ -75,6 +75,16 @@ compiler_test!(
     3 2 add ." => "5\n"
 );
 
+// Inline functions
+compiler_test!(
+    compile_inline_function,
+    "inline my_swap do
+        @r1 @r2
+        !r1 !r2
+    end
+    1 2 my_swap . ." => "1\n2\n"
+);
+
 compiler_test!(FAIL: unexpected_else, "1 2 3 else 1 2 3");
 compiler_test!(FAIL: unexpected_do, "1 2 3 do 1 2 3");
 compiler_test!(FAIL: unexpected_end_of_block, "1 2 3 end 1 2 3");

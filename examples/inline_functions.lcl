@@ -1,0 +1,6 @@
+inline my_swap do
+    @r1 @r2
+    !r1 !r2
+end
+
+1 2 my_swap . .

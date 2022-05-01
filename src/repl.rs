@@ -173,6 +173,10 @@ impl Repl {
                 self.error_handle,
                 "functions are not supported in the interactive shell",
             )?,
+            TokenType::Inline => writeln!(
+                self.error_handle,
+                "functions are not supported in the interactive shell",
+            )?,
         }
         Ok(())
     }

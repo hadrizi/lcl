@@ -19,8 +19,7 @@ struct Compiler {
     markers: Vec<(usize, Location)>,
     mem_capacity: i32,
 
-    functions: HashMap<String, (String, usize, bool)>,
-    is_capturing: bool,
+    functions: HashMap<String, (String, usize, bool, bool)>,
     capture: Option<Capture>
 }
 
@@ -33,7 +32,6 @@ impl Compiler {
             handler,
             mem_capacity: 262144,
             markers: Vec::new(),
-            is_capturing: false,
             capture: None,
             functions: HashMap::new()
         }
@@ -43,7 +41,7 @@ impl Compiler {
         let mut start_body = String::new();
         for (idx, token) in program.iter().enumerate() {
             let asm = self.token_to_asm(token, idx, program)?;
-            if self.is_capturing && self.capture.is_some() {
+            if self.capture.is_some() {
                 self.capture.as_mut().unwrap().push_asm(&asm)
             } else {
                 start_body.push_str(&asm);
@@ -123,7 +121,7 @@ impl Compiler {
             TokenType::Do => {
                 if let Some((m, _)) = self.markers.last() {
                     Ok(format!("\t; Do:end of loop condition\n\tpop rax\n\ttest rax, rax\n\tjz e{}\n", m))
-                } else if self.is_capturing && self.capture.as_ref().unwrap().initializing {
+                } else if self.capture.is_some() && self.capture.as_ref().unwrap().initializing {
                     self.capture.as_mut().unwrap().initializing = false;
                     Ok("".to_string())
                 } else {
@@ -141,14 +139,14 @@ impl Compiler {
                         }
                         _ => Ok(format!("e{}:\n", &m))
                     }
-                } else if self.is_capturing && self.capture.is_some() {
-                    self.is_capturing = false;
+                } else if self.capture.is_some() {
                     self.functions.insert(
                         self.capture.as_ref().unwrap().get_name().to_string(), 
                         (
                                 self.capture.as_mut().unwrap().get_source().to_string(), 
                                 self.capture.as_mut().unwrap().last_offset(),
                                 self.capture.as_mut().unwrap().returning,
+                                self.capture.as_mut().unwrap().inline
                             )
                     );
                     self.capture = None;
@@ -176,13 +174,16 @@ impl Compiler {
                 "rot" => {
                     Ok("\t; ROT\n\tpop rax\n\tpop rbx\n\tpop rcx\n\tpush rbx\n\tpush rax\n\tpush rcx\n".to_string())
                 }
-                name if self.is_capturing && self.capture.is_some() && self.capture.as_ref().unwrap().initializing => {
+                name if self.capture.is_some() && !self.capture.as_ref().unwrap().has_name() => {
+                    self.capture.as_mut().unwrap().set_name(name);
+                    Ok("".to_string())
+                }
+                name if self.capture.is_some() && self.capture.as_ref().unwrap().initializing && self.capture.as_ref().unwrap().has_name() => {
                     self.capture.as_mut().unwrap().add_local_var(name);
                     Ok("".to_string())
                 }
                 name
                     if 
-                        self.is_capturing &&
                         self.capture.is_some() &&
                         !self.capture.as_ref().unwrap().initializing &&
                         self.capture.as_ref().unwrap().has_local_var(name) => 
@@ -190,18 +191,18 @@ impl Compiler {
                     let var = self.capture.as_ref().unwrap().get_local_var(name);
                     Ok(format!("\t; Push {}\n\tmov rax, {}\n\tpush rax\n", name, var))
                 }
-                name if self.is_capturing && self.capture.is_none() => {
-                    self.capture = Some(Capture::new(name, token.loc.clone()));
-                    Ok("".to_string())
-                }
                 other => {
-                    if let Some((_, size, returning)) = self.functions.get(other) {
-                        Ok(format!(
-                            "\t; Call {0}\n\tcall {0}\n\tadd rsp, {1}\n{2}", 
-                            other, 
-                            size, 
-                            if *returning { "\tpush rax\n" } else { "" }
-                        ))
+                    if let Some((source, size, returning, inline)) = self.functions.get(other) {
+                        if !inline {
+                            Ok(format!(
+                                "\t; Call {0}\n\tcall {0}\n\tadd rsp, {1}\n{2}", 
+                                other, 
+                                size, 
+                                if *returning { "\tpush rax\n" } else { "" }
+                            ))
+                        } else {
+                            Ok(format!("\t; Inline call {}\n{}", &other, source))
+                        }
                     } else {
                         return Err(Error::new(
                             std::io::ErrorKind::Other,
@@ -209,7 +210,7 @@ impl Compiler {
                         ))
                     }
                 }
-            },
+            }
             TokenType::Mem => {
                 Ok("\t; MEM\n\tpush mem".to_string())
             }
@@ -237,9 +238,17 @@ impl Compiler {
                 }
             }
             TokenType::Function => {
-                self.is_capturing = true;
+                if self.capture.is_none() {
+                    self.capture = Some(Capture::new(token.loc.clone(), false));
+                }
                 Ok("".to_string())
-            },
+            }
+            TokenType::Inline => {
+                if self.capture.is_none() {
+                    self.capture = Some(Capture::new(token.loc.clone(), true));
+                }
+                Ok("".to_string())
+            }
             TokenType::Multiply => unimplemented!(),
             TokenType::Divide => unimplemented!(),
             TokenType::Mod => unimplemented!(),
@@ -300,7 +309,9 @@ impl Compiler {
         writeln!(self.handler, "\tret")?;
 
         for func in self.functions.iter() {
-            writeln!(self.handler, "{}", func.1.0)?;
+            if !func.1.3 {
+                writeln!(self.handler, "{}", func.1.0)?;
+            }
         }
 
         writeln!(self.handler, "_start:")?;

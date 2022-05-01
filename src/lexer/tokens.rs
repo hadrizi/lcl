@@ -24,6 +24,7 @@ pub enum TokenType {
     Identifier(String),
     Push(TargetType),
     Pop(TargetType),
+    Inline,
     Function,
     Dot,
     Plus,
@@ -65,6 +66,7 @@ impl FromStr for TokenType {
             "do" => Ok(Self::Do),
             "mem" => Ok(Self::Mem),
             "fn" => Ok(Self::Function),
+            "inline" => Ok(Self::Inline),
             other if other.starts_with('!') && other.len() == 1 => {
                 Ok(Self::Push(TargetType::Memory))
             }

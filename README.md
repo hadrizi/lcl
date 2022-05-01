@@ -17,6 +17,7 @@ Experimental stack-oriented programming language. Functions edition.
     3. [Control flow](#control-flow)
     4. [Functions](#functions)
         1. [Returning functions](#returning-functions)
+        2. [Inline functions](#inline-functions)
     5. [Comments](#comments)
 4. [Interactive shell](#interactive-shell)
 
@@ -168,6 +169,21 @@ fn print a do
 end
 ```
 won't return anything because `.` does not push anything to the stack.
+#### Inline functions
+Inline functions are functions whose body is directly injected in the code, thus they don't have their stack frame and work with the "caller's" stack frame
+Example:
+```
+inline my_swap do
+    @r1 @r2
+    !r1 !r2
+end
+
+1 2 my_swap . .
+```
+will be translated to
+```
+1 2 @r1 @r2 !r1 !r2 . .
+```
 
 ### Comments
 Two types of comments are supported:

@@ -22,6 +22,7 @@ lexer_test!(tokenize_while, "while" => vec![TokenType::While]);
 lexer_test!(tokenize_do, "do" => vec![TokenType::Do]);
 lexer_test!(tokenize_mem, "mem" => vec![TokenType::Mem]);
 lexer_test!(tokenize_fn, "fn" => vec![TokenType::Function]);
+lexer_test!(tokenize_inline, "inline" => vec![TokenType::Inline]);
 
 // Push/Pop tests
 lexer_test!(tokenize_pop_to_memory, "@" => vec![TokenType::Pop(TargetType::Memory)]);

@@ -3,42 +3,54 @@ use std::collections::HashMap;
 use crate::lib::utils::Location;
 
 pub struct Capture {
-    name: String,
+    name: Option<String>,
     local_variables: HashMap<String, usize>,
     source: String,
     offset: usize,
 
     pub loc: Location,
+    pub inline: bool,
     pub returning: bool,
     pub initializing: bool,
 }
 
 impl Capture {
-    pub fn new(name: &str, loc: Location) -> Self {
-        let mut c = Self {
+    pub fn new(loc: Location, inline: bool) -> Self {
+        Self {
             loc,
-            name: name.to_string(),
+            inline,
+            name: None,
             local_variables: HashMap::new(),
             offset: 8,
             initializing: true,
             returning: false,
             source: String::new(),
-        };
-        c.header();
-        c
-    }
-
-    fn header(&mut self) {
-        self.source
-            .push_str(format!("{}:\n\tpush rbp\n\tmov rbp, rsp\n", &self.name).as_str());
-    }
-
-    fn footer(&mut self) {
-        if self.source.lines().last().unwrap().contains("push") {
-            self.returning = true;
-            self.source.push_str("\n\tpop rax\n");
         }
-        self.source.push_str("\tmov rsp, rbp\n\tpop rbp\n\tret\n");
+    }
+
+    fn header(&mut self) -> String {
+        if !self.inline {
+            format!(
+                "{}:\n\tpush rbp\n\tmov rbp, rsp\n",
+                &self.name.as_ref().unwrap()
+            )
+        } else {
+            "".to_string()
+        }
+    }
+
+    fn footer(&mut self) -> String {
+        if !self.inline {
+            let mut res = String::new();
+            if self.source.lines().last().unwrap().contains("push") {
+                self.returning = true;
+                res.push_str("\n\tpop rax\n");
+            }
+            res.push_str("\tmov rsp, rbp\n\tpop rbp\n\tret\n");
+            res
+        } else {
+            "".to_string()
+        }
     }
 
     pub fn add_local_var(&mut self, name: &str) {
@@ -65,12 +77,26 @@ impl Capture {
         self.source.push_str(asm);
     }
 
-    pub fn get_source(&mut self) -> &str {
-        self.footer();
-        self.source.as_str()
+    pub fn get_source(&mut self) -> String {
+        let header = self.header();
+        let footer = self.footer();
+        format!("{}{}{}", header, &self.source, footer)
     }
 
     pub fn get_name(&self) -> &str {
-        self.name.as_str()
+        // self.name.as_str()
+        if let Some(n) = &self.name {
+            n.as_str()
+        } else {
+            ""
+        }
+    }
+
+    pub fn set_name(&mut self, name: &str) {
+        self.name = Some(name.to_string());
+    }
+
+    pub fn has_name(&self) -> bool {
+        self.name.is_some()
     }
 }
