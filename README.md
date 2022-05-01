@@ -173,7 +173,7 @@ won't return anything because `.` does not push anything to the stack.
 Inline functions are functions whose body is directly injected in the code, thus they don't have their stack frame and work with the "caller's" stack frame
 Example:
 ```
-inline my_swap do
+inline fn my_swap do
     @r1 @r2
     !r1 !r2
 end
